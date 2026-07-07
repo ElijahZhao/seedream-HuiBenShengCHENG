@@ -21,9 +21,11 @@ jobs:
           node-version: 20
           cache: pnpm
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: pnpm install
+      - name: Build frontend
+        run: pnpm next build
       - name: Build Tauri
         run: pnpm tauri:build
       - name: Upload exe
@@ -45,9 +47,11 @@ jobs:
           node-version: 20
           cache: pnpm
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: pnpm install
+      - name: Build frontend
+        run: pnpm next build
       - name: Build Tauri
         run: pnpm tauri:build
       - name: Upload dmg
@@ -77,9 +81,14 @@ jobs:
         uses: android-actions/setup-android@v3
       - name: Install dependencies
         run: pnpm install
+      - name: Build frontend
+        run: pnpm next build
+      - name: Add Android platform
+        run: pnpm cap add android
       - name: Sync Capacitor
+        run: pnpm cap sync
+      - name: Build APK
         run: |
-          pnpm cap:sync
           cd android
           ./gradlew assembleDebug
       - name: Upload apk
