@@ -10,7 +10,6 @@
     "frontendDist": "../out"
   },
   "app": {
-    "title": "Seedream - AI 绘本创作",
     "windows": [
       {
         "title": "Seedream - AI 绘本创作",
