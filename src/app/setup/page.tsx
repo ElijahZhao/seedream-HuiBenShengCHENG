@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Key, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { Key, ArrowRight, CheckCircle2, Loader2, Stethoscope } from 'lucide-react';
 import { setApiKey, hasApiKey } from '@/lib/localAuth';
 import { generateStoryStream } from '@/lib/volcengine';
+import Link from 'next/link';
 
 export default function SetupPage() {
   const [apiKey, setApiKeyValue] = useState('');
@@ -118,8 +119,16 @@ export default function SetupPage() {
           )}
 
           {testResult === 'fail' && (
-            <div className="text-red-500 text-sm">
-              API Key 无效或网络异常，请检查后重试
+            <div className="space-y-2">
+              <div className="text-red-500 text-sm">
+                API Key 无效或网络异常，请检查后重试
+              </div>
+              <Link href="/diagnostics">
+                <Button variant="ghost" size="sm" className="text-purple-600 h-8">
+                  <Stethoscope className="h-4 w-4 mr-1" />
+                  运行全面诊断
+                </Button>
+              </Link>
             </div>
           )}
 
