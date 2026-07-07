@@ -83,8 +83,6 @@ jobs:
         run: pnpm install
       - name: Build frontend
         run: pnpm next build
-      - name: Add Android platform
-        run: pnpm cap add android
       - name: Sync Capacitor
         run: pnpm cap sync
       - name: Build APK

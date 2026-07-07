@@ -91,3 +91,10 @@ logs/
 # Preview files
 .preview
 .codegraph
+
+# Android build artifacts
+android/app/build/
+android/.gradle/
+android/build/
+*.apk
+*.aab
