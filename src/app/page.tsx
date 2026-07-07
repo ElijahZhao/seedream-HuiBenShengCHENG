@@ -6,6 +6,7 @@ import { Sparkles, BookOpen, Palette, Zap, Users, ArrowRight, Star, Wand2, Check
 import StyleShowcase from './components/StyleShowcase';
 import Footer from '@/components/Footer';
 import AnimatedBackground from '@/components/AnimatedBackground';
+import AutoDiagnostics from '@/components/AutoDiagnostics';
 
 const artStyles = [
   { value: 'watercolor', label: '水彩风', description: '柔和的水彩效果，温暖梦幻', gradient: 'from-purple-400 to-purple-500' },
@@ -272,6 +273,8 @@ export default function Home() {
       {/* Footer */}
       <Footer />
 
+      {/* 自动诊断（静默运行，结果输出到 console） */}
+      <AutoDiagnostics />
     </div>
   );
 }
