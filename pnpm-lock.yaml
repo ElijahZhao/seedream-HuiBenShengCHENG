@@ -118,7 +118,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       coze-coding-dev-sdk:
         specifier: ^0.7.2
-        version: 0.7.2(@types/pg@8.16.0)(openai@6.15.0(zod@4.3.5))(sql.js@1.14.1)
+        version: 0.7.2(@types/pg@8.16.0)(@types/sql.js@1.4.11)(openai@6.15.0(zod@4.3.5))(sql.js@1.14.1)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -127,10 +127,10 @@ importers:
         version: 0.31.8
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1)
+        version: 0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1))(zod@4.3.5)
+        version: 0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1))(zod@4.3.5)
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.3)
@@ -213,6 +213,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.7)
+      '@types/sql.js':
+        specifier: ^1.4.11
+        version: 1.4.11
       eslint:
         specifier: ^9
         version: 9.39.2(jiti@2.6.1)
@@ -2406,6 +2409,9 @@ packages:
   '@types/d3-timer@3.0.2':
     resolution: {integrity: sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw==}
 
+  '@types/emscripten@1.41.5':
+    resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
+
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
@@ -2444,6 +2450,9 @@ packages:
 
   '@types/slice-ansi@4.0.0':
     resolution: {integrity: sha512-+OpjSaq85gvlZAYINyzKpLeiFkSC4EsC6IIiT6v6TLSU5k5U83fHGj9Lel8oKEXM0HqgrMVCjXPDPVICtxF7EQ==}
+
+  '@types/sql.js@1.4.11':
+    resolution: {integrity: sha512-QXIx38p2ZThJaK9vP5ZdqdlRe1FG9I8SmCZOS7FHfB/2qPAjZwkL7/vlfPg6N/oWHuuOaGg/P/IRwfP2W0kWVQ==}
 
   '@types/statuses@2.0.6':
     resolution: {integrity: sha512-xMAgYwceFhRA2zY+XbEA7mxYbA093wdiW8Vu6gZPGWy9cmOyU9XesH1tNcEWsKFd5Vzrqx5T3D38PWx1FIIXkA==}
@@ -8005,6 +8014,8 @@ snapshots:
 
   '@types/d3-timer@3.0.2': {}
 
+  '@types/emscripten@1.41.5': {}
+
   '@types/estree@1.0.8': {}
 
   '@types/fs-extra@8.1.5':
@@ -8044,6 +8055,11 @@ snapshots:
       csstype: 3.2.3
 
   '@types/slice-ansi@4.0.0': {}
+
+  '@types/sql.js@1.4.11':
+    dependencies:
+      '@types/emscripten': 1.41.5
+      '@types/node': 20.19.27
 
   '@types/statuses@2.0.6': {}
 
@@ -8559,7 +8575,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  coze-coding-dev-sdk@0.7.2(@types/pg@8.16.0)(openai@6.15.0(zod@4.3.5))(sql.js@1.14.1):
+  coze-coding-dev-sdk@0.7.2(@types/pg@8.16.0)(@types/sql.js@1.4.11)(openai@6.15.0(zod@4.3.5))(sql.js@1.14.1):
     dependencies:
       '@aws-sdk/client-s3': 3.962.0
       '@aws-sdk/lib-storage': 3.962.0(@aws-sdk/client-s3@3.962.0)
@@ -8569,7 +8585,7 @@ snapshots:
       chalk: 5.6.2
       commander: 14.0.2
       drizzle-kit: 0.31.8
-      drizzle-orm: 0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1)
+      drizzle-orm: 0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1)
       ora: 9.0.0
       pg: 8.16.3
       transliteration: 2.6.0
@@ -8765,15 +8781,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1):
+  drizzle-orm@0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1):
     optionalDependencies:
       '@types/pg': 8.16.0
+      '@types/sql.js': 1.4.11
       pg: 8.16.3
       sql.js: 1.14.1
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1))(zod@4.3.5):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1))(zod@4.3.5):
     dependencies:
-      drizzle-orm: 0.45.1(@types/pg@8.16.0)(pg@8.16.3)(sql.js@1.14.1)
+      drizzle-orm: 0.45.1(@types/pg@8.16.0)(@types/sql.js@1.4.11)(pg@8.16.3)(sql.js@1.14.1)
       zod: 4.3.5
 
   dunder-proto@1.0.1:

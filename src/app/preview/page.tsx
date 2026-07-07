@@ -20,15 +20,10 @@ interface Scene {
   imageUrl?: string | null;
 }
 
-export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PreviewPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(0);
   const [storyData, setStoryData] = useState<any>(null);
-  const [id, setId] = useState<string>('');
-
-  useEffect(() => {
-    params.then(({ id }) => setId(id));
-  }, [params]);
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -36,73 +31,14 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
 
   // 检查登录状态
   useEffect(() => {
-    const getCookieValue = (name: string): string | null => {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        const idx = trimmed.indexOf('=');
-        if (idx === -1) continue;
-        const cookieName = trimmed.substring(0, idx);
-        const cookieValue = trimmed.substring(idx + 1);
-        if (cookieName === name) {
-          return cookieValue;
-        }
-      }
-      return null;
+    const checkLoginStatus = () => {
+      const user = getAuthUser();
+      setIsLoggedIn(!!user);
     };
 
-    const checkLoginStatus = (retryCount = 0) => {
-      // 优先从 Cookie 读取，如果没有则从 localStorage 读取
-      let userId = getCookieValue('userId');
-
-      // 如果 Cookie 中没有，尝试从 localStorage 读取
-      if (!userId) {
-        userId = localStorage.getItem('userId');
-      }
-
-      const loggedIn = !!userId;
-      setIsLoggedIn(loggedIn);
-      console.log('[Preview] User logged in:', loggedIn, 'userId:', userId, 'retryCount:', retryCount);
-    };
-
-    // 初始加载时延迟检查，确保 Cookie 已设置
-    const initialLoadTimer = setTimeout(() => {
-      checkLoginStatus(0);
-    }, 150);
-
-    // 监听路由变化
-    const handleRouteChange = () => {
-      console.log('[Preview] Route changed, checking login status after delay');
-      // 延迟检查，确保 Cookie 已更新
-      setTimeout(() => {
-        checkLoginStatus(1);
-      }, 150);
-    };
-
-    window.addEventListener('popstate', handleRouteChange);
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-
-    history.pushState = function(...args) {
-      originalPushState.apply(history, args);
-      handleRouteChange();
-    };
-
-    history.replaceState = function(...args) {
-      originalReplaceState.apply(history, args);
-      handleRouteChange();
-    };
-
-    // 也定期检查登录状态（兜底）
+    checkLoginStatus();
     const interval = setInterval(checkLoginStatus, 3000);
-
-    return () => {
-      clearTimeout(initialLoadTimer);
-      window.removeEventListener('popstate', handleRouteChange);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -132,11 +68,9 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
 
     setExporting(true);
     try {
-      // 获取语言（默认中文）
       const language = (storyData.language as 'zh' | 'en') || 'zh';
       const pdfText = getPDFExportText(language);
 
-      // 创建PDF文档
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -146,9 +80,9 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // 1. 创建封面
+      // 封面
       const coverDiv = document.createElement('div');
-      coverDiv.style.width = `${pageWidth * 3.78}px`; // mm to px (1mm = 3.78px)
+      coverDiv.style.width = `${pageWidth * 3.78}px`;
       coverDiv.style.height = `${pageHeight * 3.78}px`;
       coverDiv.style.padding = '40px';
       coverDiv.style.backgroundColor = '#F0F4FF';
@@ -174,7 +108,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       document.body.removeChild(coverDiv);
       pdf.addPage();
 
-      // 2. 创建内容页
+      // 内容页
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
 
@@ -219,7 +153,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         }
       }
 
-      // 3. 创建封底
+      // 封底
       const backCoverDiv = document.createElement('div');
       backCoverDiv.style.width = `${pageWidth * 3.78}px`;
       backCoverDiv.style.height = `${pageHeight * 3.78}px`;
@@ -244,7 +178,6 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       pdf.addImage(backCoverImgData, 'PNG', 0, 0, pageWidth, pageHeight);
       document.body.removeChild(backCoverDiv);
 
-      // 下载PDF
       pdf.save(`${storyData.title || (language === 'en' ? 'Picture Book' : '绘本')}_${Date.now()}.pdf`);
     } catch (error) {
       console.error('导出失败:', error);
@@ -257,7 +190,6 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   const handleSave = async () => {
     if (!storyData) return;
 
-    // 检查登录状态
     if (!isLoggedIn) {
       alert('请先登录后再保存作品');
       router.push('/login');
@@ -271,26 +203,6 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
 
     setSaving(true);
 
-    // 调试：打印所有cookies
-    console.log('All cookies:', document.cookie);
-    const getCookieValue = (name: string): string | null => {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        const idx = trimmed.indexOf('=');
-        if (idx === -1) continue;
-        const cookieName = trimmed.substring(0, idx);
-        const cookieValue = trimmed.substring(idx + 1);
-        if (cookieName === name) {
-          return cookieValue;
-        }
-      }
-      return null;
-    };
-    const userIdCookie = getCookieValue('userId');
-    console.log('userId from client cookie:', userIdCookie);
-
-    // 获取第一张图片作为封面
     const coverImage = scenes.find((scene: Scene) => scene.imageUrl)?.imageUrl || null;
 
     const user = getAuthUser();

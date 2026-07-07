@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import AnimatedBackground from '@/components/AnimatedBackground';
-import { getLocalPicturebooks, deleteLocalPicturebook } from '@/lib/db';
+import { getLocalPicturebooks, getLocalPicturebookById, deleteLocalPicturebook } from '@/lib/db';
 import { getAuthUser } from '@/lib/localAuth';
 
 interface Picturebook {
@@ -77,6 +77,21 @@ export default function MyWorksPage() {
       month: '2-digit',
       day: '2-digit',
     });
+  };
+
+  const handlePreview = async (id: string) => {
+    try {
+      const pb = await getLocalPicturebookById(id);
+      if (pb) {
+        localStorage.setItem('generatedStory', JSON.stringify(pb.storyData));
+        router.push('/preview');
+      } else {
+        alert('作品数据不存在');
+      }
+    } catch (error) {
+      console.error('加载作品失败:', error);
+      alert('加载作品失败');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -211,11 +226,14 @@ export default function MyWorksPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Link href={`/preview/${work.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        查看
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handlePreview(work.id)}
+                    >
+                      查看
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
