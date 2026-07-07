@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -37,6 +38,9 @@ export default function Footer() {
               <span className="text-sm text-muted-foreground cursor-default">
                 帮助中心
               </span>
+              <Link href="/diagnostics" className="text-sm text-purple-600 hover:text-purple-700">
+                故障诊断
+              </Link>
             </div>
           </div>
 
