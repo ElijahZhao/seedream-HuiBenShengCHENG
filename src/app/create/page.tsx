@@ -85,7 +85,8 @@ export default function CreatePage() {
       }
     } catch (error) {
       console.error('搜索失败:', error);
-      setSearchMessage('搜索失败，请稍后重试');
+      const errMsg = error instanceof Error ? error.message : '请稍后重试';
+      setSearchMessage(`搜索失败：${errMsg}`);
     } finally {
       clearInterval(progressInterval);
       setTimeout(() => {
