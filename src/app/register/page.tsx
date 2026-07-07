@@ -46,7 +46,7 @@ export default function RegisterPage() {
         return;
       }
 
-      const hashedPassword = await hash(formData.password, 10);
+      const hashedPassword = await hash(formData.password, 4);
       const user = await createLocalUser({
         name: formData.name,
         email: formData.email,
@@ -62,7 +62,8 @@ export default function RegisterPage() {
 
       window.location.href = '/';
     } catch (err) {
-      setError('注册失败，请稍后重试');
+      const msg = err instanceof Error ? err.message : '请稍后重试';
+      setError(`注册失败：${msg}`);
     } finally {
       setLoading(false);
     }
