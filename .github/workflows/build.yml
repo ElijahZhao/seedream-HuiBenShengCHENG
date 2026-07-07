@@ -1,0 +1,89 @@
+name: Build Seedream App
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  # 桌面端 Windows
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build Tauri
+        run: pnpm tauri:build
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: seedream-windows
+          path: src-tauri/target/release/bundle/nsis/*.exe
+
+  # 桌面端 Mac
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build Tauri
+        run: pnpm tauri:build
+      - name: Upload dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: seedream-macos
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+
+  # 移动端 Android
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: pnpm install
+      - name: Sync Capacitor
+        run: |
+          pnpm cap:sync
+          cd android
+          ./gradlew assembleDebug
+      - name: Upload apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: seedream-android
+          path: android/app/build/outputs/apk/debug/*.apk

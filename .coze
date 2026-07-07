@@ -1,0 +1,32 @@
+[project]
+entrypoint = "src/app/page.tsx"
+requires = [ "nodejs-24" ]
+template = "nextjs"
+version = "legacy"
+appliedPatches = [
+  "nextjs/replace-npx-with-pnpm@0.0.13",
+  "nextjs/validate@0.0.20"
+]
+
+[dev]
+build = [
+  "pnpm",
+  "install",
+  "--prefer-frozen-lockfile",
+  "--prefer-offline"
+]
+run = [ "npx", "next", "dev", "--webpack", "--port", "5000" ]
+validate = [ "bash", "./scripts/validate.sh" ]
+
+[deploy]
+build = [
+  "pnpm",
+  "install",
+  "--prefer-frozen-lockfile",
+  "--prefer-offline",
+  "&&",
+  "npx",
+  "next",
+  "build"
+]
+run = [ "npx", "next", "start", "--port", "5000" ]
