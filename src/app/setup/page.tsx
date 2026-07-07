@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,12 @@ export default function SetupPage() {
   const [apiKey, setApiKeyValue] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'idle' | 'success' | 'fail'>('idle');
+  const [showHasKeyNotice, setShowHasKeyNotice] = useState(false);
+
+  // SSR-safe: check hasApiKey only on client
+  useEffect(() => {
+    setShowHasKeyNotice(hasApiKey());
+  }, []);
 
   const handleTest = async () => {
     if (!apiKey.trim()) return;
@@ -142,7 +148,7 @@ export default function SetupPage() {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
 
-          {hasApiKey() && (
+          {showHasKeyNotice && (
             <p className="text-center text-xs text-muted-foreground">
               已有保存的 API Key，重新设置将覆盖
             </p>
