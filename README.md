@@ -45,15 +45,53 @@
 - **📖 Flip-through Preview** — Browse generated picture books in a paginated reader.
 - **🔒 Local Account System** — bcryptjs-encrypted auth, no internet registration required.
 
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph User["User Interface"]
+        A[Create Page<br/>Theme + Style Picker]
+        B[Generating Page<br/>Progress UI]
+        C[My Works<br/>Local Gallery]
+        D[Preview<br/>Flip-through Reader]
+    end
+
+    subgraph Core["Next.js Frontend (TypeScript)"]
+        E[App Router Pages]
+        F[Local Auth<br/>bcryptjs]
+        G[SQLite DB<br/>sql.js WASM]
+    end
+
+    subgraph AI["ByteDance Ark API"]
+        H[LLM Service<br/>Story Generation]
+        I[Image Model<br/>Scene Illustration]
+    end
+
+    subgraph Build["CI/CD Pipeline"]
+        J[Tauri 2 Rust<br/>Win/macOS Installer]
+        K[Capacitor 8<br/>Android APK]
+        L[GitHub Actions<br/>Auto Build & Release]
+    end
+
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    E --> F
+    E --> G
+    E -->|SSE Streaming| H
+    E -->|Parallel Requests| I
+    H -->|Story Text| G
+    I -->|Illustrations| G
+    E -->|Static Export| J
+    E -->|Static Export| K
+    L --> J
+    L --> K
+```
+
 ## 📸 Screenshots
 
-<div align="center">
-
-| Creation Page | Generating | My Works |
-|:---|:---|:---|
-| Enter a theme, pick a style, and generate | Real-time progress with parallel image generation | Local gallery of all generated books |
-
-</div>
+> Screenshots coming soon.
 
 ## 🚀 Quick Start
 
@@ -150,7 +188,7 @@ For detailed build instructions, see [`BUILD_GUIDE.md`](./BUILD_GUIDE.md).
 
 ## 🤝 Contributing
 
-Issues and Pull Requests are welcome!
+Issues and Pull Requests are welcome! Please see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
