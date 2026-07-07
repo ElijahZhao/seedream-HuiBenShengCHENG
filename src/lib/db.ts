@@ -8,53 +8,60 @@ let db: any = null;
 export async function initDB() {
   if (db) return db;
 
-  const SQL = await initSqlJs({
-    locateFile: (file: string) => `/sql.js/${file}`,
-  });
+  try {
+    const SQL = await initSqlJs({
+      locateFile: (file: string) => `/sql.js/${file}`,
+    });
 
-  // 尝试从 localStorage 恢复数据库
-  const saved = localStorage.getItem('seedream_db');
-  if (saved) {
-    const uint8Array = new Uint8Array(saved.split(',').map(Number));
-    db = new SQL.Database(uint8Array);
-  } else {
-    db = new SQL.Database();
+    // 尝试从 localStorage 恢复数据库
+    const saved = localStorage.getItem('seedream_db');
+    if (saved) {
+      const uint8Array = new Uint8Array(saved.split(',').map(Number));
+      db = new SQL.Database(uint8Array);
+    } else {
+      db = new SQL.Database();
+    }
+
+    // 创建表（如果不存在）
+    db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        avatar TEXT,
+        isActive INTEGER DEFAULT 1,
+        createdAt INTEGER,
+        updatedAt INTEGER
+      );
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS picturebooks (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        theme TEXT NOT NULL,
+        description TEXT,
+        ageGroup TEXT NOT NULL,
+        style TEXT NOT NULL,
+        pageCount INTEGER DEFAULT 10,
+        storyData TEXT NOT NULL,
+        coverImage TEXT,
+        isPublished INTEGER DEFAULT 0,
+        viewCount INTEGER DEFAULT 0,
+        createdAt INTEGER,
+        updatedAt INTEGER
+      );
+    `);
+
+    return db;
+  } catch (err) {
+    console.error('[DB] 初始化失败:', err);
+    throw new Error(
+      '数据库初始化失败。可能原因：1) 浏览器不支持 WebAssembly；2) 存储空间不足。请尝试清除缓存后重试。'
+    );
   }
-
-  // 创建表（如果不存在）
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      avatar TEXT,
-      isActive INTEGER DEFAULT 1,
-      createdAt INTEGER,
-      updatedAt INTEGER
-    );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS picturebooks (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
-      title TEXT NOT NULL,
-      theme TEXT NOT NULL,
-      description TEXT,
-      ageGroup TEXT NOT NULL,
-      style TEXT NOT NULL,
-      pageCount INTEGER DEFAULT 10,
-      storyData TEXT NOT NULL,
-      coverImage TEXT,
-      isPublished INTEGER DEFAULT 0,
-      viewCount INTEGER DEFAULT 0,
-      createdAt INTEGER,
-      updatedAt INTEGER
-    );
-  `);
-
-  return db;
 }
 
 function persist() {
