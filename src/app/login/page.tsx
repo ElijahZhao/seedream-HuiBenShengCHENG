@@ -49,7 +49,8 @@ export default function LoginPage() {
 
       window.location.href = '/';
     } catch (err) {
-      setError('登录失败，请稍后重试');
+      const msg = err instanceof Error ? err.message : '请稍后重试';
+      setError(`登录失败：${msg}`);
     } finally {
       setLoading(false);
     }
