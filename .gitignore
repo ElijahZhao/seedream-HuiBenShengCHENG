@@ -98,3 +98,4 @@ android/.gradle/
 android/build/
 *.apk
 *.aab
+*.jks

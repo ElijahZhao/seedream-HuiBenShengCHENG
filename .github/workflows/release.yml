@@ -1,15 +1,29 @@
-name: Build Seedream App
+name: Release
 
 on:
   push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
 
 jobs:
-  # 桌面端 Windows
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version
+        id: version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $TAG_VERSION"
+
   build-windows:
+    needs: prepare
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,14 +42,14 @@ jobs:
         run: pnpm next build
       - name: Build Tauri
         run: pnpm tauri:build
-      - name: Upload NSIS installer
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: seedream-windows
           path: src-tauri/target/release/bundle/nsis/*.exe
 
-  # 桌面端 Mac
   build-macos:
+    needs: prepare
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,14 +68,14 @@ jobs:
         run: pnpm next build
       - name: Build Tauri
         run: pnpm tauri:build
-      - name: Upload DMG
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: seedream-macos
           path: src-tauri/target/release/bundle/dmg/*.dmg
 
-  # 移动端 Android
   build-android:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -97,8 +111,40 @@ jobs:
         run: |
           cd android
           ./gradlew assembleRelease
-      - name: Upload apk
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: seedream-android
           path: android/app/build/outputs/apk/release/*.apk
+
+  publish-release:
+    needs: [build-windows, build-macos, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: false
+
+      - name: Rename artifacts
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          mkdir -p release-assets
+          for f in artifacts/seedream-windows/*.exe; do
+            cp "$f" "release-assets/Seedream-${VERSION}-Windows-x64.exe"
+          done
+          for f in artifacts/seedream-macos/*.dmg; do
+            cp "$f" "release-assets/Seedream-${VERSION}-macOS.dmg"
+          done
+          for f in artifacts/seedream-android/*.apk; do
+            cp "$f" "release-assets/Seedream-${VERSION}-Android.apk"
+          done
+          ls -la release-assets/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Seedream ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: release-assets/*
