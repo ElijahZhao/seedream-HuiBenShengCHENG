@@ -1,8 +1,12 @@
 <div align="center">
 
-# 🎨 Seedream 绘本生成器
+# 🎨 Seedream — AI Children's Picture Book Generator
 
-**AI 驱动的儿童绘本创作工具 — 桌面端 + 移动端混合应用**
+**AI-powered children's picture book creation tool — desktop + mobile hybrid app**
+
+<p>
+  <a href="README.zh-CN.md">中文</a> | <b>English</b>
+</p>
 
 <p>
   <a href="https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/releases">
@@ -18,145 +22,142 @@
 </p>
 
 <p>
-  <a href="#-功能特性">功能特性</a> •
-  <a href="#-界面预览">界面预览</a> •
-  <a href="#-快速开始">快速开始</a> •
-  <a href="#-下载安装">下载安装</a> •
-  <a href="#-技术栈">技术栈</a> •
-  <a href="#-项目结构">项目结构</a>
+  <a href="#-features">Features</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-download--install">Download</a> •
+  <a href="#%EF%B8%8F-tech-stack">Tech Stack</a> •
+  <a href="#%EF%B8%8F-project-structure">Structure</a>
 </p>
 
 </div>
 
 ---
 
-## ✨ 功能特性
+## ✨ Features
 
-- 🤖 **AI 故事生成** — 基于火山方舟大模型，输入主题即可生成完整儿童故事
-- 🖼️ **AI 插图绘制** — Seedream 模型为每个场景自动生成精美插画
-- 🎨 **15 种艺术风格** — 水彩、油画、像素风、国潮、宫崎骏等多种风格一键切换
-- 💾 **完全本地存储** — SQLite 本地数据库，所有绘本数据保存在设备端，隐私无忧
-- 🖥️ **桌面端应用** — Windows / macOS 原生桌面程序（Tauri 构建）
-- 📱 **移动端应用** — Android APK 独立安装包（Capacitor 构建）
-- 📖 **绘本预览与导出** — 翻页式浏览已生成的绘本，支持导出分享
-- 🔒 **本地账号系统** — bcryptjs 加密，无需联网注册
+- **🤖 AI Story Generation** — Powered by the ByteDance Ark LLM API. Enter a theme and get a complete children's story with multiple chapters.
+- **🖼️ AI Illustration** — Seedream image model generates beautiful scene illustrations in parallel.
+- **🎨 15 Art Styles** — One-click switching between watercolor, oil painting, pixel art, Chinese ink, Ghibli, and more.
+- **💾 Fully Local Storage** — All picture books are saved in an on-device SQLite database. No cloud dependency for data.
+- **🖥️ Desktop Apps** — Native Windows / macOS installers built with Tauri 2 (Rust).
+- **📱 Mobile App** — Signed Android APK built with Capacitor 8.
+- **📖 Flip-through Preview** — Browse generated picture books in a paginated reader.
+- **🔒 Local Account System** — bcryptjs-encrypted auth, no internet registration required.
 
-## 📸 界面预览
+## 📸 Screenshots
 
 <div align="center">
 
-| 创作页面 | 生成中 | 我的作品 |
+| Creation Page | Generating | My Works |
 |:---|:---|:---|
-| 输入主题、选择风格、一键生成故事 | 实时进度展示，多图并行生成 | 本地画廊，随时翻阅已生成绘本 |
+| Enter a theme, pick a style, and generate | Real-time progress with parallel image generation | Local gallery of all generated books |
 
 </div>
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 前置条件
+### Prerequisites
 
-- 火山方舟 API Key（用于 AI 文字和图片生成）
+- **ByteDance Ark Platform API Key** (for text and image generation)
+  - Get one at [Ark Console](https://console.volcengine.com/ark) → Management → API Key Management
+  - Text generation: ~500K free tokens per day
+  - Image generation: ~¥0.22 per image
 
-> 💡 获取方式：[火山方舟控制台](https://console.volcengine.com/ark) → 开通管理 → API Key 管理
->
-> 费用参考：文字生成每日 **50 万 tokens 免费**，图片生成约 **0.22 元/张**
+### First-time Setup
 
-### 首次使用流程
+1. Download and install the app for your platform from the [Releases](https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/releases) page.
+2. Open the app and enter your Ark API Key in the Settings page (connectivity is auto-checked).
+3. Register a local account (data stays fully offline).
+4. Tap **Start Creating**, enter a picture book theme.
+5. Pick your favorite art style and wait for AI generation.
+6. View your creations anytime in **My Works**.
 
-1. 下载对应平台的安装包并打开应用
-2. 在设置页填入火山方舟 API Key（应用自动检测连通性）
-3. 注册本地账号（数据完全离线存储，无需联网）
-4. 点击「开始创作」，输入绘本主题
-5. 选择喜欢的艺术风格，等待 AI 生成故事和插画
-6. 在「我的作品」中随时查看和翻阅
+## ⬇️ Download & Install
 
-## ⬇️ 下载安装
-
-| 平台 | 格式 | 系统要求 |
+| Platform | Format | System Requirements |
 |:---|:---|:---|
-| Windows | `.exe` 安装包 | Windows 10 / 11 |
-| macOS | `.dmg` 安装包 | macOS 10.15+（Intel / Apple Silicon） |
-| Android | `.apk` 安装包 | Android 8.0（API 26）以上 |
+| Windows | `.exe` installer | Windows 10 / 11 |
+| macOS | `.dmg` installer | macOS 10.15+ (Intel / Apple Silicon) |
+| Android | `.apk` | Android 8.0+ (API 26) |
 
-> 📦 最新版本请在 [Releases](https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/releases) 页面下载
+> 📦 Download the latest release from the [Releases](https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/releases) page.
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
-| 层级 | 技术选型 |
+| Layer | Technology |
 |:---|:---|
-| 前端框架 | Next.js 16 + React 19 + TypeScript 5 |
-| UI 组件库 | shadcn/ui + Tailwind CSS v4 |
-| 桌面端壳 | Tauri 2（Rust） |
-| 移动端壳 | Capacitor 8 |
-| 本地数据库 | SQLite（sql.js WASM） |
-| 本地认证 | bcryptjs + localStorage |
-| AI 接口 | 火山方舟 Ark API（OpenAI 兼容） |
-| 包管理器 | pnpm 9+ |
+| Frontend Framework | Next.js 16 + React 19 + TypeScript 5 |
+| UI Components | shadcn/ui + Tailwind CSS v4 |
+| Desktop Shell | Tauri 2 (Rust) |
+| Mobile Shell | Capacitor 8 |
+| Local Database | SQLite (sql.js WASM) |
+| Local Auth | bcryptjs + localStorage |
+| AI API | ByteDance Ark API (OpenAI-compatible) |
+| Package Manager | pnpm 9+ |
 
-## 📦 手动构建
+## 📦 Manual Build
 
 ```bash
-# 1. 克隆仓库
+# 1. Clone the repository
 git clone https://github.com/ElijahZhao/seedream-HuiBenShengCHENG.git
 cd seedream-HuiBenShengCHENG
 
-# 2. 安装依赖
+# 2. Install dependencies
 pnpm install
 
-# 3. 桌面端开发调试
+# 3. Desktop dev mode
 pnpm tauri:dev
 
-# 4. 桌面端打包
+# 4. Desktop build
 pnpm tauri:build
 
-# 5. 移动端同步
+# 5. Mobile sync
 pnpm cap:sync
 ```
 
-详细构建指南请参考 [`BUILD_GUIDE.md`](./BUILD_GUIDE.md)。
+For detailed build instructions, see [`BUILD_GUIDE.md`](./BUILD_GUIDE.md).
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
-├── src/app/                    # Next.js App Router 页面
-│   ├── create/                 # 故事创作页（输入主题、选择风格）
-│   ├── generating/             # 图片生成页（并行生成、进度展示）
-│   ├── my-works/               # 作品画廊（本地绘本列表）
-│   ├── preview/[id]/           # 绘本预览（翻页阅读）
-│   ├── setup/                  # 首次引导 / API Key 配置
-│   ├── login/                  # 本地登录
-│   └── register/               # 本地注册
+├── src/app/                    # Next.js App Router pages
+│   ├── create/                 # Story creation (theme input, style picker)
+│   ├── generating/             # Image generation (parallel gen, progress UI)
+│   ├── my-works/               # Works gallery (local picture book list)
+│   ├── preview/[id]/           # Picture book preview (flip-through reader)
+│   ├── setup/                  # First-time setup / API Key config
+│   ├── login/                  # Local login
+│   └── register/               # Local registration
 ├── src/lib/
-│   ├── db.ts                   # SQLite 本地数据库（sql.js）
-│   ├── volcengine.ts           # 火山方舟 API 封装（SSE 流式 + 图片生成）
-│   ├── localAuth.ts            # 本地认证模块
-│   └── styleConfig.ts          # 15 种艺术风格配置
-├── src-tauri/                  # Tauri 桌面端配置（Rust）
-├── .github/workflows/          # GitHub Actions 自动构建（Windows/macOS/Android）
-├── capacitor.config.ts         # Capacitor 移动端配置
-├── public/sql.js/              # sql.js WASM 文件（静态导出必需）
-└── next.config.ts              # Next.js 静态导出配置
+│   ├── db.ts                   # SQLite local database (sql.js)
+│   ├── volcengine.ts           # ByteDance Ark API wrapper (SSE streaming + image gen)
+│   ├── localAuth.ts            # Local authentication module
+│   └── styleConfig.ts          # 15 art style configurations
+├── src-tauri/                  # Tauri desktop config (Rust)
+├── .github/workflows/          # GitHub Actions CI (Windows / macOS / Android)
+├── capacitor.config.ts         # Capacitor mobile config
+├── public/sql.js/              # sql.js WASM files (required for static export)
+└── next.config.ts              # Next.js static export config
 ```
 
-## ⚠️ 注意事项
+## ⚠️ Notes
 
-- **数据本地存储**：所有绘本数据均存储在本地设备 SQLite 中，卸载应用或清除浏览器数据将导致丢失
-- **API 费用**：图片生成按次计费，请确保火山方舟账户有足够余额
-- **首次必配**：首次使用必须在设置页配置有效的火山方舟 API Key
-- **网络依赖**：故事生成和图片生成需要联网调用火山方舟 API，绘本浏览可离线
+- **Local data only**: All picture books are stored in local device SQLite. Uninstalling the app or clearing browser data will erase them.
+- **API costs**: Image generation is billed per request. Make sure your Ark account has sufficient balance.
+- **First-time setup required**: You must configure a valid Ark API Key in Settings before first use.
+- **Network dependency**: Story generation and image generation require internet to call the Ark API. Browsing saved books works offline.
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-## 📄 许可证
+## 📄 License
 
 [MIT](LICENSE) © Seedream
 
 ---
 
 <div align="center">
-
 Made with ❤️ using <a href="https://nextjs.org">Next.js</a> + <a href="https://tauri.app">Tauri</a> + <a href="https://capacitorjs.com">Capacitor</a>
-
 </div>
