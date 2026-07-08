@@ -85,27 +85,42 @@ export default function PreviewPage() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // 预加载所有图片（解决 html2canvas 跨域图片渲染问题）
-      const preloadImage = (url: string): Promise<string> => {
-        return new Promise((resolve) => {
-          if (!url) { resolve(''); return; }
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0);
-              resolve(canvas.toDataURL('image/png'));
-            } else {
+      // 预加载所有图片（通过 fetch+blob 转 base64，解决跨域图片问题）
+      const preloadImage = async (url: string): Promise<string> => {
+        if (!url) return '';
+        try {
+          // 方法1：fetch blob 转 base64（最可靠）
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(url);
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          // 方法2：canvas 绘制转 base64（降级方案）
+          return new Promise<string>((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0);
+                  resolve(canvas.toDataURL('image/png'));
+                  return;
+                }
+              } catch { /* canvas 转换失败 */ }
               resolve(url);
-            }
-          };
-          img.onerror = () => resolve(url);
-          img.src = url;
-        });
+            };
+            img.onerror = () => resolve(url);
+            img.src = url;
+          });
+        }
       };
 
       // 预加载所有场景图片为 base64
