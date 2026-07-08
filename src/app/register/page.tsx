@@ -43,7 +43,7 @@ export default function RegisterPage() {
       await registerWithEmail(formData.name, formData.email, formData.password);
       window.location.href = '/';
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '请稍后重试';
+      console.error("[Register] Full error:", err); const msg = err instanceof Error ? (err.message || JSON.stringify(err)) : String(err);;
       setError(`注册失败：${msg}`);
     } finally {
       setLoading(false);
