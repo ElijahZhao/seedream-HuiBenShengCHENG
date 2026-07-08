@@ -6,6 +6,7 @@ import { User, LogOut, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getAuthUser, clearAuth } from '@/lib/localAuth';
 
 export function Navigation() {
   const router = useRouter();
@@ -41,32 +42,16 @@ export function Navigation() {
     };
 
     const loadUser = (retryCount = 0) => {
-      // 优先从 Cookie 读取，如果没有则从 localStorage 读取
-      let uid = getCookieValue('userId');
-      let unameValue = getCookieValue('userName');
-
-      // 如果 Cookie 中没有，尝试从 localStorage 读取
-      if (!uid) {
-        uid = localStorage.getItem('userId');
-      }
-      if (!unameValue) {
-        unameValue = localStorage.getItem('userName');
-      }
-
-      const uname = unameValue || null;
+      // 从 localAuth 统一读取认证状态
+      const authUser = getAuthUser();
 
       console.log('[Navigation] Loading user:', {
-        userId: uid,
-        userName: uname,
-        userIdFromCookie: getCookieValue('userId'),
-        userIdFromLocalStorage: localStorage.getItem('userId'),
-        allCookies: document.cookie,
-        cookieCount: document.cookie.split(';').length,
+        authUser,
         retryCount,
       });
 
-      setUserId(uid);
-      setUserName(uname);
+      setUserId(authUser?.id || null);
+      setUserName(authUser?.name || null);
       setLoading(false);
     };
 
@@ -113,13 +98,11 @@ export function Navigation() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      // 清除 localStorage
-      localStorage.removeItem('userId');
-      localStorage.removeItem('userName');
-      console.log('[Navigation] Cleared localStorage');
+      // 清除认证状态
+      clearAuth();
+      console.log('[Navigation] Cleared auth');
+      setUserId(null);
+      setUserName(null);
       router.push('/');
       router.refresh();
     } catch (error) {

@@ -3,13 +3,9 @@
  * 直接在前端调用，无需后端中转
  */
 
-const BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
+import { getApiKey } from '@/lib/localAuth';
 
-function getApiKey(): string {
-  const key = localStorage.getItem('seedream_api_key');
-  if (!key) throw new Error('请先设置火山方舟 API Key');
-  return key;
-}
+const BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
 
 // ========== 故事生成（文字）==========
 
