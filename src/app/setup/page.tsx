@@ -15,9 +15,13 @@ export default function SetupPage() {
   const [testResult, setTestResult] = useState<'idle' | 'success' | 'fail'>('idle');
   const [showHasKeyNotice, setShowHasKeyNotice] = useState(false);
 
-  // SSR-safe: check hasApiKey only on client
+  // SSR-safe: load saved key and check hasApiKey only on client
   useEffect(() => {
-    setShowHasKeyNotice(hasApiKey());
+    const saved = localStorage.getItem('seedream_api_key');
+    if (saved) {
+      setApiKeyValue(saved);
+      setShowHasKeyNotice(true);
+    }
   }, []);
 
   const handleTest = async () => {
@@ -55,7 +59,10 @@ export default function SetupPage() {
   };
 
   const handleSave = () => {
-    setApiKey(apiKey.trim());
+    const trimmed = apiKey.trim();
+    if (trimmed) {
+      setApiKey(trimmed);
+    }
     window.location.href = '/login';
   };
 
@@ -158,3 +165,4 @@ export default function SetupPage() {
     </div>
   );
 }
+
