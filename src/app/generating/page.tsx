@@ -127,6 +127,9 @@ export default function GeneratingPage() {
             pageCount: updatedScenes.length,
             storyData: updatedStory,
             userId: authUser?.id || 'guest',
+            theme: story.theme || '',
+            ageGroup: story.ageGroup || '3-5',
+            style: story.style || 'watercolor',
           });
           console.log('[Generating] Auto-saved picturebook:', title);
         } catch (saveErr) {
