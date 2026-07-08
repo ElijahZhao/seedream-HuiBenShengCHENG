@@ -10,7 +10,7 @@
 
 <p>
   <a href="https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/releases">
-    <img src="https://img.shields.io/github/v/release/ElijahZhao/seedream-HuiBenShengCHENG?color=blue&style=flat-square" alt="Release">
+    <img src="https://img.shields.io/github/v/release/ElijahZhao/seedream-HuiBenShengCHENG?label=Release&include_prereleases" alt="Release">
   </a>
   <a href="https://github.com/ElijahZhao/seedream-HuiBenShengCHENG/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/ElijahZhao/seedream-HuiBenShengCHENG/build.yml?branch=main&style=flat-square" alt="Build">
@@ -199,3 +199,4 @@ Issues and Pull Requests are welcome! Please see [`CONTRIBUTING.md`](./CONTRIBUT
 <div align="center">
 Made with ❤️ using <a href="https://nextjs.org">Next.js</a> + <a href="https://tauri.app">Tauri</a> + <a href="https://capacitorjs.com">Capacitor</a>
 </div>
+
