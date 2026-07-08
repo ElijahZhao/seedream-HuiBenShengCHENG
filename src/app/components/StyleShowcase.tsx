@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Palette } from 'lucide-react';
 import { styleExampleImages } from '@/config/styleImages';
