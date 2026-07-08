@@ -1,7 +1,9 @@
 import initSqlJs from 'sql.js';
+import { getStorage } from './storage';
 
 // 使用 sql.js 实现本地 SQLite 数据库
-// 所有数据存储在内存中，关闭 App 后需要持久化到 localStorage
+// 持久化通过 storage 抽象层，自动选择最佳后端：
+//   Tauri → 文件系统 | Capacitor → 沙箱文件 | Web → IndexedDB | Fallback → localStorage
 
 let db: any = null;
 
@@ -13,11 +15,10 @@ export async function initDB() {
       locateFile: (file: string) => `/sql.js/${file}`,
     });
 
-    // 尝试从 localStorage 恢复数据库
-    const saved = localStorage.getItem('seedream_db');
+    const storage = await getStorage();
+    const saved = await storage.loadBinary('seedream_db');
     if (saved) {
-      const uint8Array = new Uint8Array(saved.split(',').map(Number));
-      db = new SQL.Database(uint8Array);
+      db = new SQL.Database(saved);
     } else {
       db = new SQL.Database();
     }
@@ -64,10 +65,11 @@ export async function initDB() {
   }
 }
 
-function persist() {
+async function persist() {
   if (!db) return;
   const data = db.export();
-  localStorage.setItem('seedream_db', Array.from(data).join(','));
+  const storage = await getStorage();
+  await storage.saveBinary('seedream_db', data);
 }
 
 function generateId(): string {

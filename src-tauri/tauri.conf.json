@@ -45,5 +45,12 @@
     "macOS": {
       "minimumSystemVersion": "10.13"
     }
+  },
+  "plugins": {
+    "fs": {
+      "scope": [
+        "$APPDATA/seedream/**"
+      ]
+    }
   }
 }

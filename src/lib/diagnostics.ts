@@ -6,6 +6,7 @@
 import { getApiKey } from './localAuth';
 import { initDB } from './db';
 import { styleExampleImages } from '@/config/styleImages';
+import { getStorageBackendName, getStorage } from './storage';
 
 export type DiagStatus = 'pass' | 'fail' | 'warn' | 'running';
 
@@ -33,12 +34,13 @@ export interface DiagReport {
     language: string;
     isTauri: boolean;
     isCapacitor: boolean;
+    storageBackend: string;
   };
 }
 
 // ========== 环境检测 ==========
 
-function detectEnvironment() {
+function detectEnvironment(storageBackend: string) {
   const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown';
   return {
     userAgent: ua,
@@ -46,10 +48,65 @@ function detectEnvironment() {
     language: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
     isTauri: (window as any).__TAURI__ !== undefined,
     isCapacitor: (window as any).Capacitor !== undefined,
+    storageBackend,
   };
 }
 
 // ========== 各项检查 ==========
+
+async function checkStorageBackend(): Promise<DiagResult> {
+  const start = performance.now();
+  try {
+    const backendName = await getStorageBackendName();
+    const storage = await getStorage();
+
+    // 测试读写
+    const testKey = '__seedream_diag_test__';
+    await storage.save(testKey, 'ok');
+    const val = await storage.load(testKey);
+    await storage.remove(testKey);
+
+    if (val !== 'ok') {
+      return {
+        id: 'storageBackend',
+        name: '存储后端',
+        status: 'fail',
+        message: '存储后端读写测试失败',
+        detail: `${backendName} 后端初始化成功但读写异常`,
+        durationMs: Math.round(performance.now() - start),
+      };
+    }
+
+    const backendDesc: Record<string, string> = {
+      'Tauri FS': 'Tauri 原生文件系统（AppData）',
+      'Capacitor FS': 'Capacitor 文件系统（沙箱）',
+      'IndexedDB': '浏览器 IndexedDB（推荐）',
+      'localStorage': '浏览器 localStorage（降级）',
+    };
+
+    const isFallback = backendName === 'localStorage';
+
+    return {
+      id: 'storageBackend',
+      name: '存储后端',
+      status: isFallback ? 'warn' : 'pass',
+      message: `使用 ${backendDesc[backendName] || backendName}`,
+      detail: isFallback
+        ? 'localStorage 容量有限（约 5-10MB），建议升级到支持 IndexedDB 或原生文件系统的环境'
+        : '存储后端工作正常，容量不受限',
+      durationMs: Math.round(performance.now() - start),
+    };
+  } catch (err) {
+    return {
+      id: 'storageBackend',
+      name: '存储后端',
+      status: 'fail',
+      message: '存储后端初始化失败',
+      detail: err instanceof Error ? err.message : String(err),
+      durationMs: Math.round(performance.now() - start),
+    };
+  }
+}
 
 async function checkLocalStorage(): Promise<DiagResult> {
   const start = performance.now();
@@ -62,7 +119,7 @@ async function checkLocalStorage(): Promise<DiagResult> {
     if (val !== 'ok') {
       return {
         id: 'localStorage',
-        name: '本地存储 (localStorage)',
+        name: '降级存储 (localStorage)',
         status: 'fail',
         message: 'localStorage 读写测试失败',
         detail: '浏览器可能禁用了本地存储，或处于无痕模式',
@@ -80,7 +137,7 @@ async function checkLocalStorage(): Promise<DiagResult> {
 
     return {
       id: 'localStorage',
-      name: '本地存储 (localStorage)',
+      name: '降级存储 (localStorage)',
       status: 'pass',
       message: 'localStorage 读写正常',
       detail: `已使用约 ${usedMB} MB`,
@@ -89,7 +146,7 @@ async function checkLocalStorage(): Promise<DiagResult> {
   } catch (err) {
     return {
       id: 'localStorage',
-      name: '本地存储 (localStorage)',
+      name: '降级存储 (localStorage)',
       status: 'fail',
       message: 'localStorage 不可用',
       detail: err instanceof Error ? err.message : String(err),
@@ -374,7 +431,8 @@ async function checkNetwork(): Promise<DiagResult> {
 export async function runDiagnostics(): Promise<DiagReport> {
   const results: DiagResult[] = [];
 
-  // 按顺序运行检查，后面的检查依赖前面的结果
+  // 存储后端检测放在第一位
+  results.push(await checkStorageBackend());
   results.push(await checkLocalStorage());
   results.push(await checkNetwork());
   results.push(await checkApiKeySet());
@@ -394,6 +452,8 @@ export async function runDiagnostics(): Promise<DiagReport> {
   const failed = results.filter(r => r.status === 'fail').length;
   const warnings = results.filter(r => r.status === 'warn').length;
 
+  const storageBackend = await getStorageBackendName().catch(() => 'unknown');
+
   return {
     timestamp: new Date().toISOString(),
     results,
@@ -403,7 +463,7 @@ export async function runDiagnostics(): Promise<DiagReport> {
       failed,
       warnings,
     },
-    environment: detectEnvironment(),
+    environment: detectEnvironment(storageBackend),
   };
 }
 
@@ -416,6 +476,7 @@ export function printDiagReport(report: DiagReport) {
   console.group('🔍 Seedream 故障自诊断报告');
   console.log(`时间: ${report.timestamp}`);
   console.log(`环境: ${environment.isTauri ? 'Tauri' : environment.isCapacitor ? 'Capacitor' : 'Web'} | ${environment.platform} | ${environment.language}`);
+  console.log(`存储: ${environment.storageBackend}`);
   console.log(`结果: ✅ ${summary.passed} 通过 | ❌ ${summary.failed} 失败 | ⚠️ ${summary.warnings} 警告`);
   console.log('');
 
