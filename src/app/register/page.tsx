@@ -20,11 +20,13 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStep, setLoadingStep] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setLoadingStep('');
 
     if (formData.password !== formData.confirmPassword) {
       setError('两次输入的密码不一致');
@@ -39,6 +41,7 @@ export default function RegisterPage() {
     }
 
     try {
+      setLoadingStep('检查邮箱是否已注册...');
       const existingUser = await getLocalUserByEmail(formData.email);
       if (existingUser) {
         setError('该邮箱已被注册');
@@ -46,7 +49,10 @@ export default function RegisterPage() {
         return;
       }
 
-      const hashedPassword = await hash(formData.password, 4);
+      setLoadingStep('加密密码中（约 1-2 秒）...');
+      const hashedPassword = await hash(formData.password, 1);
+
+      setLoadingStep('创建用户账号...');
       const user = await createLocalUser({
         name: formData.name,
         email: formData.email,
@@ -66,6 +72,7 @@ export default function RegisterPage() {
       setError(`注册失败：${msg}`);
     } finally {
       setLoading(false);
+      setLoadingStep('');
     }
   };
 
@@ -153,7 +160,7 @@ export default function RegisterPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  注册中...
+                  {loadingStep || '注册中...'}
                 </>
               ) : (
                 '注册'
