@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { hash } from 'bcryptjs';
+import { hashPassword } from '@/lib/crypto';
 import { createLocalUser, getLocalUserByEmail } from '@/lib/db';
 import { setAuthUser } from '@/lib/localAuth';
 
@@ -49,8 +49,8 @@ export default function RegisterPage() {
         return;
       }
 
-      setLoadingStep('加密密码中（约 1-2 秒）...');
-      const hashedPassword = await hash(formData.password, 1);
+      setLoadingStep('加密密码中...');
+      const hashedPassword = await hashPassword(formData.password);
 
       setLoadingStep('创建用户账号...');
       const user = await createLocalUser({

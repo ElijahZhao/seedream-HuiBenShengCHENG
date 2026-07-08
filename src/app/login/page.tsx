@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { hash, compare } from 'bcryptjs';
-import { createLocalUser, getLocalUserByEmail } from '@/lib/db';
+import { verifyPassword } from '@/lib/crypto';
+import { getLocalUserByEmail } from '@/lib/db';
 import { setAuthUser } from '@/lib/localAuth';
 
 export default function LoginPage() {
@@ -33,7 +33,7 @@ export default function LoginPage() {
         return;
       }
 
-      const isValid = await compare(formData.password, existingUser.password);
+      const isValid = await verifyPassword(formData.password, existingUser.password);
       if (!isValid) {
         setError('邮箱或密码不正确');
         setLoading(false);

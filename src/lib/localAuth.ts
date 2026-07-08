@@ -4,6 +4,7 @@
  */
 
 const AUTH_KEY = 'seedream_auth';
+const DEFAULT_API_KEY = 'ark-1f5b19a3-ea46-432c-8c1e-327e64de67c5-0fab0';
 
 interface AuthUser {
   id: string;
@@ -37,7 +38,7 @@ export function isLoggedIn(): boolean {
 }
 
 export function getApiKey(): string {
-  return localStorage.getItem('seedream_api_key') || '';
+  return localStorage.getItem('seedream_api_key') || DEFAULT_API_KEY;
 }
 
 export function setApiKey(key: string): void {
