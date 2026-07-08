@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,13 +41,27 @@ export default function CreatePage() {
   const [searching, setSearching] = useState(false);
   const [searchProgress, setSearchProgress] = useState(0);
   const [searchMessage, setSearchMessage] = useState('');
-  const [formData, setFormData] = useState({
-    theme: '',
-    ageGroup: '3-5',
-    style: 'watercolor',
-    pageCount: 8,
-    description: '',
-  });
+  // 从 localStorage 恢复表单数据
+  const loadFormData = () => {
+    try {
+      const saved = localStorage.getItem('seedream_create_form');
+      if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return {
+      theme: '',
+      ageGroup: '3-5',
+      style: 'watercolor',
+      pageCount: 8,
+      description: '',
+    };
+  };
+
+  const [formData, setFormData] = useState(loadFormData);
+
+  // 表单变化时自动保存到 localStorage
+  useEffect(() => {
+    localStorage.setItem('seedream_create_form', JSON.stringify(formData));
+  }, [formData]);
 
   // 搜索故事主题
   const handleSearch = async () => {
@@ -161,7 +175,15 @@ Style: ${formData.style} - ${styleDesc}`
       setLoadingProgress(100);
 
       if (storyData) {
-        localStorage.setItem('generatedStory', JSON.stringify(storyData));
+        // 将用户选择的元数据附加到故事数据中
+        const enrichedStory = {
+          ...storyData,
+          theme: formData.theme,
+          ageGroup: formData.ageGroup,
+          style: formData.style,
+          pageCount: formData.pageCount,
+        };
+        localStorage.setItem('generatedStory', JSON.stringify(enrichedStory));
         window.location.href = '/characters';
       } else {
         throw new Error('JSON 解析失败，请重试');

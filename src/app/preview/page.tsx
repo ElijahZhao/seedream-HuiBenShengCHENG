@@ -71,6 +71,11 @@ export default function PreviewPage() {
       const language = (storyData.language as 'zh' | 'en') || 'zh';
       const pdfText = getPDFExportText(language);
 
+      // 获取当前用户信息
+      const authUser = getAuthUser();
+      const authorName = authUser?.name || (language === 'en' ? 'Anonymous' : '匿名用户');
+      const styleName = getStyleName(storyData.style || 'watercolor', language);
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -79,6 +84,36 @@ export default function PreviewPage() {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // 预加载所有图片（解决 html2canvas 跨域图片渲染问题）
+      const preloadImage = (url: string): Promise<string> => {
+        return new Promise((resolve) => {
+          if (!url) { resolve(''); return; }
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } else {
+              resolve(url);
+            }
+          };
+          img.onerror = () => resolve(url);
+          img.src = url;
+        });
+      };
+
+      // 预加载所有场景图片为 base64
+      const sceneImageBase64: string[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const base64 = await preloadImage(scenes[i].imageUrl || '');
+        sceneImageBase64.push(base64);
+      }
 
       // 封面
       const coverDiv = document.createElement('div');
@@ -95,9 +130,9 @@ export default function PreviewPage() {
       coverDiv.innerHTML = `
         <div style="text-align: center; color: #6366F1; margin-bottom: 20px;">
           <h1 style="font-size: 48px; font-weight: bold; margin-bottom: 30px;">${storyData.title || pdfText.coverTitle}</h1>
-          <p style="font-size: 20px; color: #6B7280; margin: 10px 0;">${pdfText.createdBy}</p>
+          <p style="font-size: 20px; color: #6B7280; margin: 10px 0;">${language === 'en' ? 'Created by' : '作者'}：${authorName}</p>
           <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.ageGroup}：${storyData.ageGroup || (language === 'en' ? '3-5' : '3-5岁')}</p>
-          <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.artStyle}：${getStyleName(storyData.style, language)}</p>
+          <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.artStyle}：${styleName}</p>
         </div>
       `;
 
@@ -111,6 +146,7 @@ export default function PreviewPage() {
       // 内容页
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
+        const imgBase64 = sceneImageBase64[i];
 
         const pageDiv = document.createElement('div');
         pageDiv.style.width = `${pageWidth * 3.78}px`;
@@ -121,8 +157,9 @@ export default function PreviewPage() {
         pageDiv.style.flexDirection = 'column';
         pageDiv.style.fontFamily = 'Arial, sans-serif';
 
-        const imageUrl = scene.imageUrl || '';
-        const imageHtml = imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; background-color: #E5E7EB;" />` : '';
+        const imageHtml = imgBase64
+          ? `<img src="${imgBase64}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;" />`
+          : `<div style="width: 100%; height: 200px; background-color: #E5E7EB; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; color: #9CA3AF;">${language === 'en' ? 'No Image' : '暂无图片'}</div>`;
 
         pageDiv.innerHTML = `
           <div style="flex: 1;">
@@ -216,11 +253,11 @@ export default function PreviewPage() {
     try {
       await createLocalPicturebook({
         userId: user.id,
-        title: storyData.title,
-        theme: storyData.theme,
-        description: storyData.description || storyData.theme,
-        ageGroup: storyData.ageGroup,
-        style: storyData.style,
+        title: storyData.title || '未命名绘本',
+        theme: storyData.theme || '',
+        description: storyData.description || storyData.theme || '',
+        ageGroup: storyData.ageGroup || '3-5',
+        style: storyData.style || 'watercolor',
         pageCount: scenes.length,
         storyData: {
           scenes,
@@ -234,7 +271,8 @@ export default function PreviewPage() {
       alert('保存成功！您可以在"我的作品"中查看。');
     } catch (error) {
       console.error('保存失败:', error);
-      alert(error instanceof Error ? error.message : '保存失败，请稍后重试');
+      const errMsg = error instanceof Error ? error.message : '保存失败，请稍后重试';
+      alert(`保存失败：${errMsg}\n\n可能原因：数据库初始化失败，请刷新页面后重试。`);
     } finally {
       setSaving(false);
     }
