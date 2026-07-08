@@ -115,25 +115,30 @@ export default function GeneratingPage() {
 
         const updatedStory = { ...story, scenes: updatedScenes };
         localStorage.setItem('generatedStory', JSON.stringify(updatedStory));
+        setScenes(updatedScenes);
 
         // 自动保存到作品库
-        try {
-          const authUser = getAuthUser();
-          const title = story.title || '未命名绘本';
-          const coverImage = updatedScenes.find((s: Scene) => s.imageUrl)?.imageUrl || '';
-          await createLocalPicturebook({
-            title,
-            coverImage,
-            pageCount: updatedScenes.length,
-            storyData: updatedStory,
-            userId: authUser?.id || 'guest',
-            theme: story.theme || '',
-            ageGroup: story.ageGroup || '3-5',
-            style: story.style || 'watercolor',
-          });
-          console.log('[Generating] Auto-saved picturebook:', title);
-        } catch (saveErr) {
-          console.warn('[Generating] Auto-save failed:', saveErr);
+        const authUser = getAuthUser();
+        if (authUser?.id) {
+          try {
+            const title = story.title || '未命名绘本';
+            const coverImage = updatedScenes.find((s: Scene) => s.imageUrl)?.imageUrl || '';
+            await createLocalPicturebook({
+              title,
+              coverImage,
+              pageCount: updatedScenes.length,
+              storyData: updatedStory,
+              userId: authUser.id,
+              theme: story.theme || '',
+              ageGroup: story.ageGroup || '3-5',
+              style: story.style || 'watercolor',
+            });
+            console.log('[Generating] Auto-saved picturebook:', title);
+          } catch (saveErr) {
+            console.warn('[Generating] Auto-save failed:', saveErr);
+          }
+        } else {
+          console.log('[Generating] Skipped auto-save: user not logged in');
         }
 
         // 生成完成后直接跳转到预览页面
@@ -148,9 +153,17 @@ export default function GeneratingPage() {
     generateAllImages();
   }, [router]);
 
-  const storyData = typeof window !== 'undefined' ? localStorage.getItem('generatedStory') : null;
-  const story = storyData ? JSON.parse(storyData) : null;
-  const scenes: Scene[] = story?.scenes || [];
+  const [scenes, setScenes] = useState<Scene[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const storyData = localStorage.getItem('generatedStory');
+    if (!storyData) return [];
+    try {
+      const story = JSON.parse(storyData);
+      return story.scenes || [];
+    } catch {
+      return [];
+    }
+  });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">

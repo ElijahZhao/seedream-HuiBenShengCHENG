@@ -35,7 +35,7 @@ export function getAuthUser(): AuthUser | null {
 export async function clearAuth(): Promise<void> {
   localStorage.removeItem(AUTH_KEY);
   try {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'global' });
   } catch {
     // signOut 失败不影响本地清除
   }
@@ -43,6 +43,33 @@ export async function clearAuth(): Promise<void> {
 
 export function isLoggedIn(): boolean {
   return getAuthUser() !== null;
+}
+
+/**
+ * 恢复 Supabase session（页面刷新后调用）
+ * Supabase 使用 cookie/persistent storage 自动恢复 session，
+ * 这里只需同步到 localStorage 即可
+ */
+export async function restoreSession(): Promise<AuthUser | null> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const sessionUser = data.session?.user;
+    if (sessionUser) {
+      const authUser: AuthUser = {
+        id: sessionUser.id,
+        name: sessionUser.user_metadata?.name || sessionUser.email?.split('@')[0] || '用户',
+        email: sessionUser.email || '',
+        isLoggedIn: true,
+      };
+      setAuthUser(authUser);
+      return authUser;
+    }
+    // Session expired or invalid — clear stale localStorage
+    localStorage.removeItem(AUTH_KEY);
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loginWithEmail(email: string, password: string): Promise<AuthUser> {

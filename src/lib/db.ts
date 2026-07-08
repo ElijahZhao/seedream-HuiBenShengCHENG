@@ -115,7 +115,7 @@ export async function getLocalPicturebookById(id: string) {
   };
 }
 
-export async function updateLocalPicturebook(id: string, data: any) {
+export async function updateLocalPicturebook(id: string, userId: string, data: any) {
   const updatePayload: any = { updated_at: new Date().toISOString() };
 
   // 映射 camelCase → snake_case
@@ -141,18 +141,20 @@ export async function updateLocalPicturebook(id: string, data: any) {
   const { error } = await supabase
     .from('picturebooks')
     .update(updatePayload)
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) throw new Error(error.message);
 
   return getLocalPicturebookById(id);
 }
 
-export async function deleteLocalPicturebook(id: string) {
+export async function deleteLocalPicturebook(id: string, userId: string) {
   const { error } = await supabase
     .from('picturebooks')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) throw new Error(error.message);
   return true;

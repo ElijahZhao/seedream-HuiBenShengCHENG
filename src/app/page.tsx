@@ -7,24 +7,9 @@ import StyleShowcase from './components/StyleShowcase';
 import Footer from '@/components/Footer';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import AutoDiagnostics from '@/components/AutoDiagnostics';
+import { getArtStylesForDisplay } from '@/lib/styleConfig';
 
-const artStyles = [
-  { value: 'watercolor', label: '水彩风', description: '柔和的水彩效果，温暖梦幻', gradient: 'from-purple-400 to-purple-500' },
-  { value: 'anime', label: '动漫风', description: '日式动漫风格，可爱生动', gradient: 'from-purple-500 to-cyan-400' },
-  { value: 'clay', label: '黏土风', description: '3D 黏土风格，立体可爱', gradient: 'from-purple-600 to-purple-400' },
-  { value: 'sketch', label: '素描风', description: '铅笔素描风格，艺术感强', gradient: 'from-purple-400 to-purple-600' },
-  { value: 'pastel', label: '粉彩风', description: '柔和粉彩，温柔治愈', gradient: 'from-pink-400 to-purple-400' },
-  { value: 'pop', label: '波普风', description: '鲜艳色彩，活力四射', gradient: 'from-cyan-400 to-purple-500' },
-  { value: 'ukiyoe', label: '浮世绘', description: '传统日式版画，古典韵味', gradient: 'from-red-400 to-pink-500' },
-  { value: 'oil', label: '油画风', description: '油画质感，色彩丰富', gradient: 'from-orange-400 to-red-500' },
-  { value: 'collage', label: '拼贴风', description: '层次感拼贴，创意十足', gradient: 'from-yellow-400 to-orange-500' },
-  { value: 'pencil', label: '彩铅风', description: '彩铅手绘，清新自然', gradient: 'from-green-400 to-teal-500' },
-  { value: 'papercut', label: '剪纸风', description: '剪纸艺术，剪纸质感', gradient: 'from-red-500 to-orange-600' },
-  { value: 'mineral', label: '岩彩风', description: '矿物颜料，厚重质感', gradient: 'from-amber-400 to-orange-500' },
-  { value: 'vector', label: '矢量风', description: '干净利落，现代简约', gradient: 'from-blue-400 to-indigo-500' },
-  { value: 'vintage', label: '复古风', description: '怀旧色调，复古风格', gradient: 'from-yellow-600 to-orange-700' },
-  { value: 'flat', label: '扁平风', description: '扁平设计，简洁可爱', gradient: 'from-cyan-400 to-blue-500' },
-];
+const artStyles = getArtStylesForDisplay();
 
 const features = [
   {

@@ -42,6 +42,22 @@ export default function StoryboardPage() {
     }
   }, [router]);
 
+  // 编辑后同步回 localStorage
+  useEffect(() => {
+    if (scenes.length > 0) {
+      try {
+        const storyData = localStorage.getItem('generatedStory');
+        if (storyData) {
+          const story = JSON.parse(storyData);
+          story.scenes = scenes;
+          localStorage.setItem('generatedStory', JSON.stringify(story));
+        }
+      } catch (error) {
+        console.error('同步分镜数据失败:', error);
+      }
+    }
+  }, [scenes]);
+
   const handleGenerate = () => {
     // 跳转到生成页面
     router.push('/generating');

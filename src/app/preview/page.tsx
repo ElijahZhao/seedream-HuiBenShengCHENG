@@ -8,8 +8,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { jsPDF } from 'jspdf';
 import { createLocalPicturebook } from '@/lib/db';
-import { getAuthUser } from '@/lib/localAuth';
+import { getAuthUser, restoreSession } from '@/lib/localAuth';
 import { getPDFExportText, getStyleName } from '@/utils/languageDetection';
+import { toast } from 'sonner';
 
 interface Scene {
   id: string;
@@ -28,16 +29,10 @@ export default function PreviewPage() {
   const [saved, setSaved] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 检查登录状态
+  // 检查登录状态（一次性）
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const user = getAuthUser();
-      setIsLoggedIn(!!user);
-    };
-
-    checkLoginStatus();
-    const interval = setInterval(checkLoginStatus, 3000);
-    return () => clearInterval(interval);
+    const user = getAuthUser();
+    setIsLoggedIn(!!user);
   }, []);
 
   useEffect(() => {
@@ -85,6 +80,24 @@ export default function PreviewPage() {
       const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
       const margin = 15;
       const contentWidth = pageWidth - margin * 2;
+
+      // Load Chinese font for CJK support
+      console.log('加载中文字体...');
+      const fontResponse = await fetch('/fonts/NotoSansSC-Regular.ttf');
+      const fontBlob = await fontResponse.blob();
+      const fontArrayBuffer = await fontBlob.arrayBuffer();
+      const fontUint8Array = new Uint8Array(fontArrayBuffer);
+
+      // Convert to base64 for jsPDF
+      let binary = '';
+      for (let i = 0; i < fontUint8Array.length; i++) {
+        binary += String.fromCharCode(fontUint8Array[i]);
+      }
+      const fontBase64 = btoa(binary);
+
+      pdf.addFileToVFS('NotoSansSC-Regular.ttf', fontBase64);
+      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'normal', 'normal');
+      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'bold', 'normal');
 
       // 预加载所有图片为 base64
       const preloadImage = async (url: string): Promise<string> => {
@@ -135,12 +148,12 @@ export default function PreviewPage() {
       drawBg('#F0F4FF');
       pdf.setTextColor(99, 102, 241); // #6366F1
       pdf.setFontSize(28);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('NotoSansSC', 'bold');
       const title = storyData.title || pdfText.coverTitle;
       addWrappedText(title, margin, 100, contentWidth, 10, 'center');
 
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('NotoSansSC', 'normal');
       pdf.setTextColor(107, 114, 128); // #6B7280
       pdf.text(`${language === 'en' ? 'Created by' : '作者'}：${authorName}`, pageWidth / 2, 140, { align: 'center' });
       pdf.text(`${pdfText.ageGroup}：${storyData.ageGroup || (language === 'en' ? '3-5' : '3-5岁')}`, pageWidth / 2, 152, { align: 'center' });
@@ -158,7 +171,7 @@ export default function PreviewPage() {
         // 页眉：场景标题
         pdf.setTextColor(99, 102, 241);
         pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont('NotoSansSC', 'bold');
         pdf.text(`${pdfText.scene} ${i + 1}`, margin, 25);
 
         let y = 32;
@@ -190,12 +203,12 @@ export default function PreviewPage() {
         if (scene.description) {
           pdf.setTextColor(107, 114, 128);
           pdf.setFontSize(11);
-          pdf.setFont('helvetica', 'bold');
+          pdf.setFont('NotoSansSC', 'bold');
           pdf.text(`${pdfText.sceneDescription}：`, margin, y);
           y += 5;
 
           pdf.setTextColor(71, 85, 105);
-          pdf.setFont('helvetica', 'normal');
+          pdf.setFont('NotoSansSC', 'normal');
           pdf.setFontSize(10);
           y = addWrappedText(scene.description, margin, y, contentWidth, 4.5);
           y += 6;
@@ -205,11 +218,11 @@ export default function PreviewPage() {
         if (scene.text) {
           pdf.setTextColor(30, 41, 59);
           pdf.setFontSize(11);
-          pdf.setFont('helvetica', 'bold');
+          pdf.setFont('NotoSansSC', 'bold');
           pdf.text(`${pdfText.storyContent}：`, margin, y);
           y += 5;
 
-          pdf.setFont('helvetica', 'normal');
+          pdf.setFont('NotoSansSC', 'normal');
           pdf.setFontSize(10.5);
           y = addWrappedText(scene.text, margin, y, contentWidth, 5);
         }
@@ -229,11 +242,11 @@ export default function PreviewPage() {
       drawBg('#F0F4FF');
       pdf.setTextColor(99, 102, 241);
       pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('NotoSansSC', 'bold');
       pdf.text(pdfText.end, pageWidth / 2, 120, { align: 'center' });
 
       pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('NotoSansSC', 'normal');
       pdf.setTextColor(107, 114, 128);
       pdf.text(pdfText.thanks, pageWidth / 2, 140, { align: 'center' });
 
@@ -244,7 +257,7 @@ export default function PreviewPage() {
       pdf.save(`${storyData.title || (language === 'en' ? 'Picture Book' : '绘本')}_${Date.now()}.pdf`);
     } catch (error) {
       console.error('导出失败:', error);
-      alert('导出失败，请稍后重试');
+      toast.error('导出失败，请稍后重试');
     } finally {
       setExporting(false);
     }
@@ -252,25 +265,16 @@ export default function PreviewPage() {
 
   const handleSave = async () => {
     if (!storyData) return;
-
-    if (!isLoggedIn) {
-      alert('请先登录后再保存作品');
-      router.push('/login');
-      return;
-    }
-
-    if (saving) {
-      alert('正在保存中，请稍候...');
-      return;
-    }
+    if (saving) return;
 
     setSaving(true);
 
     const coverImage = scenes.find((scene: Scene) => scene.imageUrl)?.imageUrl || null;
 
-    const user = getAuthUser();
+    // 确保恢复 Supabase session
+    const restored = await restoreSession();
+    const user = restored || getAuthUser();
     if (!user) {
-      alert('请先登录后再保存作品');
       router.push('/login');
       setSaving(false);
       return;
@@ -294,11 +298,11 @@ export default function PreviewPage() {
       });
 
       setSaved(true);
-      alert('保存成功！您可以在"我的作品"中查看。');
+      toast.success('保存成功！您可以在"我的作品"中查看。');
     } catch (error) {
       console.error('保存失败:', error);
       const errMsg = error instanceof Error ? error.message : '保存失败，请稍后重试';
-      alert(`保存失败：${errMsg}\n\n可能原因：数据库初始化失败，请刷新页面后重试。`);
+      toast.error(`保存失败：${errMsg}`);
     } finally {
       setSaving(false);
     }
@@ -321,14 +325,14 @@ export default function PreviewPage() {
       {/* Header */}
       <header className="border-b border-border bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <Link href="/">
               <Button variant="ghost" size="sm">
                 <Home className="mr-2 h-4 w-4" />
                 返回首页
               </Button>
             </Link>
-            <div className="text-center">
+            <div className="hidden text-center sm:block">
               <h1 className="font-heading text-xl font-bold text-foreground">
                 {storyData.title}
               </h1>
@@ -513,7 +517,7 @@ export default function PreviewPage() {
       <footer className="mt-20 border-t border-border bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="font-body text-muted-foreground">
-            © 2025 Seedream Picturebook. 用 AI 点亮孩子的想象力
+            © {new Date().getFullYear()} Seedream Picturebook. 用 AI 点亮孩子的想象力
           </p>
         </div>
       </footer>

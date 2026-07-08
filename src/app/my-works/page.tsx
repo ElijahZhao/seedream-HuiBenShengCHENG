@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import { getLocalPicturebooks, getLocalPicturebookById, deleteLocalPicturebook } from '@/lib/db';
-import { getAuthUser } from '@/lib/localAuth';
+import { getAuthUser, restoreSession } from '@/lib/localAuth';
+import { toast } from 'sonner';
 
 interface Picturebook {
   id: string;
@@ -27,6 +28,7 @@ export default function MyWorksPage() {
   const router = useRouter();
   const [works, setWorks] = useState<Picturebook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     loadWorks();
@@ -34,7 +36,9 @@ export default function MyWorksPage() {
 
   const loadWorks = async () => {
     try {
-      const user = getAuthUser();
+      // 确保恢复 Supabase session
+      const restored = await restoreSession();
+      const user = restored || getAuthUser();
       if (!user) {
         setLoading(false);
         return;
@@ -66,6 +70,15 @@ export default function MyWorksPage() {
       sketch: '素描风',
       pastel: '粉彩风',
       pop: '波普风',
+      ukiyoe: '浮世绘',
+      oil: '油画风',
+      collage: '拼贴风',
+      pencil: '彩铅风',
+      papercut: '剪纸风',
+      mineral: '岩彩风',
+      vector: '矢量风',
+      vintage: '复古风',
+      flat: '扁平风',
     };
     return styleMap[style] || style;
   };
@@ -86,25 +99,25 @@ export default function MyWorksPage() {
         localStorage.setItem('generatedStory', JSON.stringify(pb.storyData));
         router.push('/preview');
       } else {
-        alert('作品数据不存在');
+        toast.error('作品数据不存在');
       }
     } catch (error) {
       console.error('加载作品失败:', error);
-      alert('加载作品失败');
+      toast.error('加载作品失败');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个绘本吗？')) {
-      return;
-    }
-
     try {
-      await deleteLocalPicturebook(id);
+      const user = getAuthUser();
+      if (!user) return;
+      await deleteLocalPicturebook(id, user.id);
+      setDeleteConfirmId(null);
+      toast.success('删除成功');
       loadWorks();
     } catch (error) {
       console.error('删除失败:', error);
-      alert('删除失败');
+      toast.error('删除失败');
     }
   };
 
@@ -237,7 +250,7 @@ export default function MyWorksPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(work.id)}
+                      onClick={() => setDeleteConfirmId(work.id)}
                       className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -249,6 +262,20 @@ export default function MyWorksPage() {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-heading font-bold text-foreground mb-2">确认删除</h3>
+            <p className="text-sm text-muted-foreground mb-6">确定要删除这个绘本吗？此操作不可撤销。</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>取消</Button>
+              <Button variant="destructive" onClick={() => handleDelete(deleteConfirmId)}>删除</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />

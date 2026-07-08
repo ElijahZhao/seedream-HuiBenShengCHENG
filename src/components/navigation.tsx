@@ -6,7 +6,7 @@ import { User, LogOut, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getAuthUser, clearAuth } from '@/lib/localAuth';
+import { getAuthUser, clearAuth, restoreSession } from '@/lib/localAuth';
 
 export function Navigation() {
   const router = useRouter();
@@ -24,43 +24,26 @@ export function Navigation() {
   }, []);
 
   useEffect(() => {
-    const loadUser = () => {
-      const authUser = getAuthUser();
+    const loadUser = async () => {
+      // First try to restore Supabase session (handles page refresh)
+      const restored = await restoreSession();
+      const authUser = restored || getAuthUser();
       setUserId(authUser?.id || null);
       setUserName(authUser?.name || null);
       setLoading(false);
     };
 
-    const initialLoadTimer = setTimeout(() => {
-      loadUser();
-    }, 100);
+    const initialLoadTimer = setTimeout(loadUser, 100);
 
     const handleRouteChange = () => {
-      setTimeout(() => {
-        loadUser();
-      }, 100);
+      setTimeout(loadUser, 100);
     };
 
     window.addEventListener('popstate', handleRouteChange);
 
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-
-    history.pushState = function(...args) {
-      originalPushState.apply(history, args);
-      handleRouteChange();
-    };
-
-    history.replaceState = function(...args) {
-      originalReplaceState.apply(history, args);
-      handleRouteChange();
-    };
-
     return () => {
       clearTimeout(initialLoadTimer);
       window.removeEventListener('popstate', handleRouteChange);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
     };
   }, []);
 
