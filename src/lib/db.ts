@@ -1,145 +1,10 @@
-import initSqlJs from 'sql.js';
-import { getStorage } from './storage';
+/**
+ * 数据库模块
+ * 现在基于 Supabase PostgreSQL，支持跨设备同步
+ * 接口保持不变，向下兼容
+ */
 
-// 使用 sql.js 实现本地 SQLite 数据库
-// 持久化通过 storage 抽象层，自动选择最佳后端：
-//   Tauri → 文件系统 | Capacitor → 沙箱文件 | Web → IndexedDB | Fallback → localStorage
-
-let db: any = null;
-
-export async function initDB() {
-  if (db) return db;
-
-  try {
-    const SQL = await initSqlJs({
-      locateFile: (file: string) => `/sql.js/${file}`,
-    });
-
-    const storage = await getStorage();
-    const saved = await storage.loadBinary('seedream_db');
-    if (saved) {
-      db = new SQL.Database(saved);
-    } else {
-      db = new SQL.Database();
-    }
-
-    // 创建表（如果不存在）
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        avatar TEXT,
-        isActive INTEGER DEFAULT 1,
-        createdAt INTEGER,
-        updatedAt INTEGER
-      );
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS picturebooks (
-        id TEXT PRIMARY KEY,
-        userId TEXT NOT NULL,
-        title TEXT NOT NULL,
-        theme TEXT NOT NULL,
-        description TEXT,
-        ageGroup TEXT NOT NULL,
-        style TEXT NOT NULL,
-        pageCount INTEGER DEFAULT 10,
-        storyData TEXT NOT NULL,
-        coverImage TEXT,
-        isPublished INTEGER DEFAULT 0,
-        viewCount INTEGER DEFAULT 0,
-        createdAt INTEGER,
-        updatedAt INTEGER
-      );
-    `);
-
-    return db;
-  } catch (err) {
-    console.error('[DB] 初始化失败:', err);
-    throw new Error(
-      '数据库初始化失败。可能原因：1) 浏览器不支持 WebAssembly；2) 存储空间不足。请尝试清除缓存后重试。'
-    );
-  }
-}
-
-async function persist() {
-  if (!db) return;
-  const data = db.export();
-  const storage = await getStorage();
-  await storage.saveBinary('seedream_db', data);
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-}
-
-// ========== 用户操作 ==========
-
-export async function createLocalUser(data: {
-  name: string;
-  email: string;
-  password: string;
-}) {
-  await initDB();
-  const id = generateId();
-  const now = Date.now();
-
-  db.run(
-    'INSERT INTO users (id, name, email, password, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, 1, ?, ?)',
-    [id, data.name, data.email, data.password, now, now]
-  );
-  persist();
-
-  return {
-    id,
-    name: data.name,
-    email: data.email,
-    isActive: true,
-    createdAt: new Date(now),
-    updatedAt: new Date(now),
-  };
-}
-
-export async function getLocalUserByEmail(email: string) {
-  await initDB();
-  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-  stmt.bind([email]);
-
-  let result = null;
-  while (stmt.step()) {
-    const row = stmt.getAsObject();
-    result = {
-      ...row,
-      isActive: row.isActive === 1,
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-    };
-  }
-  stmt.free();
-  return result;
-}
-
-export async function getLocalUserById(id: string) {
-  await initDB();
-  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-  stmt.bind([id]);
-
-  let result = null;
-  while (stmt.step()) {
-    const row = stmt.getAsObject();
-    result = {
-      ...row,
-      isActive: row.isActive === 1,
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-    };
-  }
-  stmt.free();
-  return result;
-}
+import { supabase } from './supabaseClient';
 
 // ========== 绘本操作 ==========
 
@@ -154,103 +19,141 @@ export async function createLocalPicturebook(data: {
   storyData: any;
   coverImage?: string;
 }) {
-  await initDB();
-  const id = generateId();
-  const now = Date.now();
+  const now = new Date().toISOString();
 
-  db.run(
-    'INSERT INTO picturebooks (id, userId, title, theme, description, ageGroup, style, pageCount, storyData, coverImage, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [
-      id,
-      data.userId,
-      data.title,
-      data.theme,
-      data.description || '',
-      data.ageGroup,
-      data.style,
-      data.pageCount,
-      JSON.stringify(data.storyData),
-      data.coverImage || '',
-      now,
-      now,
-    ]
-  );
-  persist();
+  const { data: row, error } = await supabase
+    .from('picturebooks')
+    .insert({
+      user_id: data.userId,
+      title: data.title,
+      theme: data.theme,
+      description: data.description || '',
+      age_group: data.ageGroup,
+      style: data.style,
+      page_count: data.pageCount,
+      story_data: data.storyData,
+      cover_image: data.coverImage || '',
+      is_published: false,
+      view_count: 0,
+      created_at: now,
+      updated_at: now,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
 
   return {
-    id,
-    ...data,
-    isPublished: false,
-    viewCount: 0,
-    createdAt: new Date(now),
-    updatedAt: new Date(now),
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    theme: row.theme,
+    description: row.description,
+    ageGroup: row.age_group,
+    style: row.style,
+    pageCount: row.page_count,
+    storyData: row.story_data,
+    coverImage: row.cover_image,
+    isPublished: row.is_published,
+    viewCount: row.view_count,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
 export async function getLocalPicturebooks(userId: string) {
-  await initDB();
-  const stmt = db.prepare('SELECT * FROM picturebooks WHERE userId = ? ORDER BY createdAt DESC');
-  stmt.bind([userId]);
+  const { data, error } = await supabase
+    .from('picturebooks')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
 
-  const results = [];
-  while (stmt.step()) {
-    const row = stmt.getAsObject();
-    results.push({
-      ...row,
-      storyData: JSON.parse(row.storyData || '{}'),
-      isPublished: row.isPublished === 1,
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-    });
-  }
-  stmt.free();
-  return results;
+  if (error) throw new Error(error.message);
+
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    theme: row.theme,
+    description: row.description,
+    ageGroup: row.age_group,
+    style: row.style,
+    pageCount: row.page_count,
+    storyData: row.story_data,
+    coverImage: row.cover_image,
+    isPublished: row.is_published,
+    viewCount: row.view_count,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  }));
 }
 
 export async function getLocalPicturebookById(id: string) {
-  await initDB();
-  const stmt = db.prepare('SELECT * FROM picturebooks WHERE id = ?');
-  stmt.bind([id]);
+  const { data: row, error } = await supabase
+    .from('picturebooks')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  let result = null;
-  while (stmt.step()) {
-    const row = stmt.getAsObject();
-    result = {
-      ...row,
-      storyData: JSON.parse(row.storyData || '{}'),
-      isPublished: row.isPublished === 1,
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-    };
-  }
-  stmt.free();
-  return result;
+  if (error || !row) return null;
+
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    theme: row.theme,
+    description: row.description,
+    ageGroup: row.age_group,
+    style: row.style,
+    pageCount: row.page_count,
+    storyData: row.story_data,
+    coverImage: row.cover_image,
+    isPublished: row.is_published,
+    viewCount: row.view_count,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
 }
 
 export async function updateLocalPicturebook(id: string, data: any) {
-  await initDB();
-  const now = Date.now();
+  const updatePayload: any = { updated_at: new Date().toISOString() };
 
-  const keys = Object.keys(data);
-  const values = keys.map((key) => {
-    if (key === 'storyData') return JSON.stringify(data[key]);
-    return data[key];
-  });
+  // 映射 camelCase → snake_case
+  const fieldMap: Record<string, string> = {
+    title: 'title',
+    theme: 'theme',
+    description: 'description',
+    ageGroup: 'age_group',
+    style: 'style',
+    pageCount: 'page_count',
+    storyData: 'story_data',
+    coverImage: 'cover_image',
+    isPublished: 'is_published',
+    viewCount: 'view_count',
+  };
 
-  const setClause = keys.map((k) => `${k} = ?`).join(', ');
-  db.run(`UPDATE picturebooks SET ${setClause}, updatedAt = ? WHERE id = ?`, [
-    ...values,
-    now,
-    id,
-  ]);
-  persist();
+  for (const [camelKey, snakeKey] of Object.entries(fieldMap)) {
+    if (data[camelKey] !== undefined) {
+      updatePayload[snakeKey] = data[camelKey];
+    }
+  }
+
+  const { error } = await supabase
+    .from('picturebooks')
+    .update(updatePayload)
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
 
   return getLocalPicturebookById(id);
 }
 
 export async function deleteLocalPicturebook(id: string) {
-  await initDB();
-  db.run('DELETE FROM picturebooks WHERE id = ?', [id]);
-  persist();
+  const { error } = await supabase
+    .from('picturebooks')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
   return true;
 }

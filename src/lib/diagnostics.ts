@@ -4,7 +4,7 @@
  */
 
 import { getApiKey } from './localAuth';
-import { initDB } from './db';
+import { supabase } from './supabaseClient';
 import { styleExampleImages } from '@/config/styleImages';
 import { getStorageBackendName, getStorage } from './storage';
 
@@ -274,43 +274,78 @@ async function checkSqlJsWASM(): Promise<DiagResult> {
 async function checkDatabase(): Promise<DiagResult> {
   const start = performance.now();
   try {
-    const dbInstance = await initDB();
+    // 检查 Supabase 连接
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
 
-    // 检查表是否存在
-    const tablesResult = dbInstance.exec("SELECT name FROM sqlite_master WHERE type='table'");
-    const tables = tablesResult[0]?.values?.map((v: any[]) => v[0]) || [];
-    const hasUsers = tables.includes('users');
-    const hasBooks = tables.includes('picturebooks');
-
-    if (hasUsers && hasBooks) {
-      // 统计数据
-      const userCount = dbInstance.exec('SELECT COUNT(*) FROM users')[0]?.values?.[0]?.[0] || 0;
-      const bookCount = dbInstance.exec('SELECT COUNT(*) FROM picturebooks')[0]?.values?.[0]?.[0] || 0;
-
+    if (profilesError) {
       return {
         id: 'database',
-        name: '本地数据库',
-        status: 'pass',
-        message: '数据库初始化正常',
-        detail: `表结构完整 | 用户: ${userCount} 人 | 绘本: ${bookCount} 本`,
+        name: '云数据库 (Supabase)',
+        status: 'fail',
+        message: 'Supabase 数据库连接失败',
+        detail: profilesError.message,
         durationMs: Math.round(performance.now() - start),
       };
     }
 
+    const { count: bookCount, error: booksError } = await supabase
+      .from('picturebooks')
+      .select('id', { count: 'exact', head: true });
+
     return {
       id: 'database',
-      name: '本地数据库',
-      status: 'warn',
-      message: '数据库存在但表结构异常',
-      detail: `发现的表: ${tables.join(', ') || '无'}`,
+      name: '云数据库 (Supabase)',
+      status: booksError ? 'warn' : 'pass',
+      message: 'Supabase 数据库连接正常',
+      detail: booksError
+        ? `profiles 表可访问，picturebooks 表异常: ${booksError.message}`
+        : `数据库工作正常`,
       durationMs: Math.round(performance.now() - start),
     };
   } catch (err) {
     return {
       id: 'database',
-      name: '本地数据库',
+      name: '云数据库 (Supabase)',
       status: 'fail',
-      message: '数据库初始化失败',
+      message: '数据库连接异常',
+      detail: err instanceof Error ? err.message : String(err),
+      durationMs: Math.round(performance.now() - start),
+    };
+  }
+}
+
+async function checkSupabaseAuth(): Promise<DiagResult> {
+  const start = performance.now();
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      return {
+        id: 'supabaseAuth',
+        name: 'Supabase 认证',
+        status: 'fail',
+        message: 'Supabase Auth 服务异常',
+        detail: error.message,
+        durationMs: Math.round(performance.now() - start),
+      };
+    }
+
+    return {
+      id: 'supabaseAuth',
+      name: 'Supabase 认证',
+      status: 'pass',
+      message: session ? '已登录，认证正常' : '未登录，认证服务可用',
+      detail: session ? `用户: ${session.user.email}` : '请登录以使用完整功能',
+      durationMs: Math.round(performance.now() - start),
+    };
+  } catch (err) {
+    return {
+      id: 'supabaseAuth',
+      name: 'Supabase 认证',
+      status: 'fail',
+      message: '认证服务连接异常',
       detail: err instanceof Error ? err.message : String(err),
       durationMs: Math.round(performance.now() - start),
     };
@@ -443,9 +478,8 @@ export async function runDiagnostics(): Promise<DiagReport> {
     results.push(await checkApiKeyValid());
   }
 
-  results.push(await checkSqlJsWASM());
   results.push(await checkDatabase());
-  results.push(await checkBcryptjs());
+  results.push(await checkSupabaseAuth());
   results.push(await checkStyleImages());
 
   const passed = results.filter(r => r.status === 'pass').length;

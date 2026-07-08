@@ -7,9 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { hashPassword } from '@/lib/crypto';
-import { createLocalUser, getLocalUserByEmail } from '@/lib/db';
-import { setAuthUser } from '@/lib/localAuth';
+import { registerWithEmail } from '@/lib/localAuth';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -41,31 +39,8 @@ export default function RegisterPage() {
     }
 
     try {
-      setLoadingStep('检查邮箱是否已注册...');
-      const existingUser = await getLocalUserByEmail(formData.email);
-      if (existingUser) {
-        setError('该邮箱已被注册');
-        setLoading(false);
-        return;
-      }
-
-      setLoadingStep('加密密码中...');
-      const hashedPassword = await hashPassword(formData.password);
-
-      setLoadingStep('创建用户账号...');
-      const user = await createLocalUser({
-        name: formData.name,
-        email: formData.email,
-        password: hashedPassword,
-      });
-
-      setAuthUser({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        isLoggedIn: true,
-      });
-
+      setLoadingStep('创建账号中...');
+      await registerWithEmail(formData.name, formData.email, formData.password);
       window.location.href = '/';
     } catch (err) {
       const msg = err instanceof Error ? err.message : '请稍后重试';

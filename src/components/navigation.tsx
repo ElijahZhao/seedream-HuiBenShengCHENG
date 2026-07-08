@@ -16,7 +16,6 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    // 检测滚动以添加阴影效果
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -25,56 +24,25 @@ export function Navigation() {
   }, []);
 
   useEffect(() => {
-    // 从cookie获取用户信息
-    const getCookieValue = (name: string): string | null => {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        const idx = trimmed.indexOf('=');
-        if (idx === -1) continue;
-        const cookieName = trimmed.substring(0, idx);
-        const cookieValue = trimmed.substring(idx + 1);
-        if (cookieName === name) {
-          return cookieValue;
-        }
-      }
-      return null;
-    };
-
-    const loadUser = (retryCount = 0) => {
-      // 从 localAuth 统一读取认证状态
+    const loadUser = () => {
       const authUser = getAuthUser();
-
-      console.log('[Navigation] Loading user:', {
-        authUser,
-        retryCount,
-      });
-
       setUserId(authUser?.id || null);
       setUserName(authUser?.name || null);
       setLoading(false);
     };
 
-    console.log('[Navigation] useEffect running');
-
-    // 初始加载时延迟检查，确保 Cookie 已设置
     const initialLoadTimer = setTimeout(() => {
-      loadUser(0);
+      loadUser();
     }, 100);
 
-    // 监听路由变化
     const handleRouteChange = () => {
-      console.log('[Navigation] Route changed, reloading user after delay');
-      // 延迟检查，确保 Cookie 已更新
       setTimeout(() => {
-        loadUser(1);
+        loadUser();
       }, 100);
     };
 
-    // 监听 popstate 事件（浏览器前进/后退）
     window.addEventListener('popstate', handleRouteChange);
 
-    // 监听 pushstate 和 replacestate（需要劫持）
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
@@ -98,9 +66,7 @@ export function Navigation() {
 
   const handleLogout = async () => {
     try {
-      // 清除认证状态
-      clearAuth();
-      console.log('[Navigation] Cleared auth');
+      await clearAuth();
       setUserId(null);
       setUserName(null);
       router.push('/');

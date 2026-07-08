@@ -7,9 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { verifyPassword } from '@/lib/crypto';
-import { getLocalUserByEmail } from '@/lib/db';
-import { setAuthUser } from '@/lib/localAuth';
+import { loginWithEmail } from '@/lib/localAuth';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -25,28 +23,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const existingUser = await getLocalUserByEmail(formData.email);
-
-      if (!existingUser) {
-        setError('邮箱或密码不正确');
-        setLoading(false);
-        return;
-      }
-
-      const isValid = await verifyPassword(formData.password, existingUser.password);
-      if (!isValid) {
-        setError('邮箱或密码不正确');
-        setLoading(false);
-        return;
-      }
-
-      setAuthUser({
-        id: existingUser.id,
-        name: existingUser.name,
-        email: existingUser.email,
-        isLoggedIn: true,
-      });
-
+      await loginWithEmail(formData.email, formData.password);
       window.location.href = '/';
     } catch (err) {
       const msg = err instanceof Error ? err.message : '请稍后重试';
