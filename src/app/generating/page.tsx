@@ -20,7 +20,7 @@ interface Scene {
 }
 
 const MAX_RETRIES = 2;
-const CONCURRENCY_LIMIT = 3;
+const CONCURRENCY_LIMIT = 5;
 
 export default function GeneratingPage() {
   const router = useRouter();

@@ -131,6 +131,16 @@ export default function Home() {
                   <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
               </Link>
+              <Link href="/my-works">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-16 px-10 text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 rounded-2xl shadow-clay-md hover:shadow-clay-xl transition-all duration-300 hover-lift"
+                >
+                  <BookOpen className="mr-2 h-6 w-6" />
+                  我的创作
+                </Button>
+              </Link>
             </div>
 
             <div className="mt-16 flex items-center justify-center gap-12 text-base text-muted-foreground">

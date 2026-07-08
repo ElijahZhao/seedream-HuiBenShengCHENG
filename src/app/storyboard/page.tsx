@@ -182,7 +182,11 @@ export default function StoryboardPage() {
                       value={scenes[selectedScene]?.description || ''}
                       placeholder="画面详细描述"
                       className="min-h-32 text-base"
-                      readOnly
+                      onChange={(e) => {
+                        const newScenes = [...scenes];
+                        newScenes[selectedScene] = { ...newScenes[selectedScene], description: e.target.value };
+                        setScenes(newScenes);
+                      }}
                     />
                   </div>
 
@@ -195,7 +199,11 @@ export default function StoryboardPage() {
                       value={scenes[selectedScene]?.text || ''}
                       placeholder="该页的旁白文字"
                       className="min-h-20 text-base"
-                      readOnly
+                      onChange={(e) => {
+                        const newScenes = [...scenes];
+                        newScenes[selectedScene] = { ...newScenes[selectedScene], text: e.target.value };
+                        setScenes(newScenes);
+                      }}
                     />
                   </div>
 

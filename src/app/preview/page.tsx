@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, Home, Download, Loader2, Save } from 'lucide-rea
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { createLocalPicturebook } from '@/lib/db';
 import { getAuthUser } from '@/lib/localAuth';
 import { getPDFExportText, getStyleName } from '@/utils/languageDetection';
@@ -82,14 +81,15 @@ export default function PreviewPage() {
         format: 'a4'
       });
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pageWidth = pdf.internal.pageSize.getWidth();  // 210mm
+      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
 
-      // 预加载所有图片（通过 fetch+blob 转 base64，解决跨域图片问题）
+      // 预加载所有图片为 base64
       const preloadImage = async (url: string): Promise<string> => {
         if (!url) return '';
         try {
-          // 方法1：fetch blob 转 base64（最可靠）
           const resp = await fetch(url);
           const blob = await resp.blob();
           return new Promise<string>((resolve) => {
@@ -99,136 +99,147 @@ export default function PreviewPage() {
             reader.readAsDataURL(blob);
           });
         } catch {
-          // 方法2：canvas 绘制转 base64（降级方案）
-          return new Promise<string>((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-              try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                  ctx.drawImage(img, 0, 0);
-                  resolve(canvas.toDataURL('image/png'));
-                  return;
-                }
-              } catch { /* canvas 转换失败 */ }
-              resolve(url);
-            };
-            img.onerror = () => resolve(url);
-            img.src = url;
-          });
+          return url;
         }
       };
 
-      // 预加载所有场景图片为 base64
       const sceneImageBase64: string[] = [];
       for (let i = 0; i < scenes.length; i++) {
         const base64 = await preloadImage(scenes[i].imageUrl || '');
         sceneImageBase64.push(base64);
       }
 
-      // 封面
-      const coverDiv = document.createElement('div');
-      coverDiv.style.width = `${pageWidth * 3.78}px`;
-      coverDiv.style.height = `${pageHeight * 3.78}px`;
-      coverDiv.style.padding = '40px';
-      coverDiv.style.backgroundColor = '#F0F4FF';
-      coverDiv.style.display = 'flex';
-      coverDiv.style.flexDirection = 'column';
-      coverDiv.style.alignItems = 'center';
-      coverDiv.style.justifyContent = 'center';
-      coverDiv.style.fontFamily = 'Arial, sans-serif';
+      // 辅助：绘制背景色块
+      const drawBg = (color: string) => {
+        pdf.setFillColor(color);
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      };
 
-      coverDiv.innerHTML = `
-        <div style="text-align: center; color: #6366F1; margin-bottom: 20px;">
-          <h1 style="font-size: 48px; font-weight: bold; margin-bottom: 30px;">${storyData.title || pdfText.coverTitle}</h1>
-          <p style="font-size: 20px; color: #6B7280; margin: 10px 0;">${language === 'en' ? 'Created by' : '作者'}：${authorName}</p>
-          <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.ageGroup}：${storyData.ageGroup || (language === 'en' ? '3-5' : '3-5岁')}</p>
-          <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.artStyle}：${styleName}</p>
-        </div>
-      `;
+      // 辅助：文本自动换行
+      const addWrappedText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number, align: 'left' | 'center' = 'left') => {
+        const splitText = pdf.splitTextToSize(text, maxWidth);
+        if (align === 'center') {
+          splitText.forEach((line: string) => {
+            const textWidth = pdf.getTextWidth(line);
+            pdf.text(line, x + (maxWidth - textWidth) / 2, y);
+            y += lineHeight;
+          });
+        } else {
+          pdf.text(splitText, x, y);
+          y += splitText.length * lineHeight;
+        }
+        return y;
+      };
 
-      document.body.appendChild(coverDiv);
-      const coverCanvas = await html2canvas(coverDiv, { scale: 2, useCORS: true });
-      const coverImgData = coverCanvas.toDataURL('image/png');
-      pdf.addImage(coverImgData, 'PNG', 0, 0, pageWidth, pageHeight);
-      document.body.removeChild(coverDiv);
+      // ===== 封面 =====
+      drawBg('#F0F4FF');
+      pdf.setTextColor(99, 102, 241); // #6366F1
+      pdf.setFontSize(28);
+      pdf.setFont('helvetica', 'bold');
+      const title = storyData.title || pdfText.coverTitle;
+      addWrappedText(title, margin, 100, contentWidth, 10, 'center');
+
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(107, 114, 128); // #6B7280
+      pdf.text(`${language === 'en' ? 'Created by' : '作者'}：${authorName}`, pageWidth / 2, 140, { align: 'center' });
+      pdf.text(`${pdfText.ageGroup}：${storyData.ageGroup || (language === 'en' ? '3-5' : '3-5岁')}`, pageWidth / 2, 152, { align: 'center' });
+      pdf.text(`${pdfText.artStyle}：${styleName}`, pageWidth / 2, 164, { align: 'center' });
+
       pdf.addPage();
 
-      // 内容页
+      // ===== 内容页 =====
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
         const imgBase64 = sceneImageBase64[i];
 
-        const pageDiv = document.createElement('div');
-        pageDiv.style.width = `${pageWidth * 3.78}px`;
-        pageDiv.style.height = `${pageHeight * 3.78}px`;
-        pageDiv.style.padding = '30px';
-        pageDiv.style.backgroundColor = '#FAFCFC';
-        pageDiv.style.display = 'flex';
-        pageDiv.style.flexDirection = 'column';
-        pageDiv.style.fontFamily = 'Arial, sans-serif';
+        drawBg('#FAFCFC');
 
-        const imageHtml = imgBase64
-          ? `<img src="${imgBase64}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;" />`
-          : `<div style="width: 100%; height: 200px; background-color: #E5E7EB; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; color: #9CA3AF;">${language === 'en' ? 'No Image' : '暂无图片'}</div>`;
+        // 页眉：场景标题
+        pdf.setTextColor(99, 102, 241);
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${pdfText.scene} ${i + 1}`, margin, 25);
 
-        pageDiv.innerHTML = `
-          <div style="flex: 1;">
-            <h2 style="color: #6366F1; font-size: 24px; font-weight: bold; margin-bottom: 15px;">${pdfText.scene} ${i + 1}</h2>
-            ${imageHtml}
-            <div style="margin-bottom: 20px;">
-              <p style="color: #6B7280; font-size: 14px; margin-bottom: 8px; font-weight: bold;">${pdfText.sceneDescription}：</p>
-              <p style="color: #475569; font-size: 12px; line-height: 1.6;">${scene.description || ''}</p>
-            </div>
-            ${scene.text ? `
-              <div>
-                <p style="color: #1E293B; font-size: 14px; margin-bottom: 8px; font-weight: bold;">${pdfText.storyContent}：</p>
-                <p style="color: #1E293B; font-size: 13px; line-height: 1.8;">${scene.text}</p>
-              </div>
-            ` : ''}
-          </div>
-          <div style="text-align: center; color: #9CA3AF; font-size: 12px; margin-top: 20px;">${i + 2}</div>
-        `;
+        let y = 32;
 
-        document.body.appendChild(pageDiv);
-        const pageCanvas = await html2canvas(pageDiv, { scale: 2, useCORS: true });
-        const pageImgData = pageCanvas.toDataURL('image/png');
-        pdf.addImage(pageImgData, 'PNG', 0, 0, pageWidth, pageHeight);
-        document.body.removeChild(pageDiv);
+        // 图片区域
+        if (imgBase64 && imgBase64.startsWith('data:')) {
+          try {
+            const imgHeight = 70;
+            pdf.addImage(imgBase64, 'JPEG', margin, y, contentWidth, imgHeight, undefined, 'FAST');
+            y += imgHeight + 8;
+          } catch {
+            pdf.setFillColor(229, 231, 235);
+            pdf.rect(margin, y, contentWidth, 70, 'F');
+            pdf.setTextColor(156, 163, 175);
+            pdf.setFontSize(12);
+            pdf.text(language === 'en' ? 'No Image' : '暂无图片', pageWidth / 2, y + 40, { align: 'center' });
+            y += 78;
+          }
+        } else {
+          pdf.setFillColor(229, 231, 235);
+          pdf.rect(margin, y, contentWidth, 70, 'F');
+          pdf.setTextColor(156, 163, 175);
+          pdf.setFontSize(12);
+          pdf.text(language === 'en' ? 'No Image' : '暂无图片', pageWidth / 2, y + 40, { align: 'center' });
+          y += 78;
+        }
+
+        // 场景描述
+        if (scene.description) {
+          pdf.setTextColor(107, 114, 128);
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${pdfText.sceneDescription}：`, margin, y);
+          y += 5;
+
+          pdf.setTextColor(71, 85, 105);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          y = addWrappedText(scene.description, margin, y, contentWidth, 4.5);
+          y += 6;
+        }
+
+        // 故事文本
+        if (scene.text) {
+          pdf.setTextColor(30, 41, 59);
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${pdfText.storyContent}：`, margin, y);
+          y += 5;
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10.5);
+          y = addWrappedText(scene.text, margin, y, contentWidth, 5);
+        }
+
+        // 页码
+        pdf.setTextColor(156, 163, 175);
+        pdf.setFontSize(10);
+        pdf.text(String(i + 2), pageWidth / 2, pageHeight - 10, { align: 'center' });
 
         if (i < scenes.length - 1) {
           pdf.addPage();
         }
       }
 
-      // 封底
-      const backCoverDiv = document.createElement('div');
-      backCoverDiv.style.width = `${pageWidth * 3.78}px`;
-      backCoverDiv.style.height = `${pageHeight * 3.78}px`;
-      backCoverDiv.style.backgroundColor = '#F0F4FF';
-      backCoverDiv.style.display = 'flex';
-      backCoverDiv.style.flexDirection = 'column';
-      backCoverDiv.style.alignItems = 'center';
-      backCoverDiv.style.justifyContent = 'center';
-      backCoverDiv.style.fontFamily = 'Arial, sans-serif';
+      // ===== 封底 =====
+      pdf.addPage();
+      drawBg('#F0F4FF');
+      pdf.setTextColor(99, 102, 241);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(pdfText.end, pageWidth / 2, 120, { align: 'center' });
 
-      backCoverDiv.innerHTML = `
-        <div style="text-align: center; color: #6366F1;">
-          <h1 style="font-size: 32px; font-weight: bold; margin-bottom: 20px;">${pdfText.end}</h1>
-          <p style="font-size: 16px; color: #6B7280; margin: 10px 0;">${pdfText.thanks}</p>
-          <p style="font-size: 12px; color: #9CA3AF; margin-top: 40px;">${pdfText.copyright}</p>
-        </div>
-      `;
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(107, 114, 128);
+      pdf.text(pdfText.thanks, pageWidth / 2, 140, { align: 'center' });
 
-      document.body.appendChild(backCoverDiv);
-      const backCoverCanvas = await html2canvas(backCoverDiv, { scale: 2, useCORS: true });
-      const backCoverImgData = backCoverCanvas.toDataURL('image/png');
-      pdf.addImage(backCoverImgData, 'PNG', 0, 0, pageWidth, pageHeight);
-      document.body.removeChild(backCoverDiv);
+      pdf.setFontSize(9);
+      pdf.setTextColor(156, 163, 175);
+      pdf.text(pdfText.copyright, pageWidth / 2, 260, { align: 'center' });
 
       pdf.save(`${storyData.title || (language === 'en' ? 'Picture Book' : '绘本')}_${Date.now()}.pdf`);
     } catch (error) {

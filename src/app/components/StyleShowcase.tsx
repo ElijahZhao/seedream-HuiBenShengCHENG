@@ -16,11 +16,13 @@ interface StyleShowcaseProps {
 }
 
 export default function StyleShowcase({ artStyles }: StyleShowcaseProps) {
+  const [expanded, setExpanded] = useState<string | null>(null);
   return (
     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
       {artStyles.map((style) => (
         <Card
           key={style.value}
+          onClick={() => setExpanded(expanded === style.value ? null : style.value)}
           className="border-2 border-purple-100 bg-white/80 shadow-clay-md backdrop-blur-sm hover:shadow-clay-lg transition-all duration-300 hover-lift cursor-pointer group overflow-hidden"
         >
           <CardHeader>
@@ -44,6 +46,11 @@ export default function StyleShowcase({ artStyles }: StyleShowcaseProps) {
             <CardDescription className="text-base font-body">
               {style.description}
             </CardDescription>
+            {expanded === style.value && (
+              <div className="mt-3 pt-3 border-t border-purple-100 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
+                <p className="font-body">点击选择此风格，系统将使用 {style.label} 为您生成绘本插画。</p>
+              </div>
+            )}
           </CardHeader>
         </Card>
       ))}

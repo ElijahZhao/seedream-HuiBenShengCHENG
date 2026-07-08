@@ -131,7 +131,8 @@ Requirements:
 2. Simple and age-appropriate
 3. Detailed character descriptions for consistent illustration
 4. Each scene: shotType, description, text, characters
-5. Output MUST be in a JSON code block: \`\`\`json ... \`\`\`
+5. Each scene description MUST be at least 80 words with rich visual details for AI illustration generation
+6. Output MUST be in a JSON code block: \`\`\`json ... \`\`\`
 Output format: {"title":"...","characters":[{"name":"...","description":"...","role":"..."}],"scenes":[{"id":"scene-1","shotType":"medium","description":"...","text":"...","characters":["..."]}]}
 Style: ${formData.style} - ${styleDesc}`
         : `你是专业的儿童绘本作家。为${formData.ageGroup}岁儿童创作绘本。
@@ -140,7 +141,8 @@ Style: ${formData.style} - ${styleDesc}`
 2. 简单易懂
 3. 详细的角色描述
 4. 每个场景：景别、画面描述、旁白、出场角色
-5. 必须放在JSON代码块中：\`\`\`json ... \`\`\`
+5. 每个场景的画面描述不少于80字，需包含丰富的视觉细节，便于AI生成插画
+6. 必须放在JSON代码块中：\`\`\`json ... \`\`\`
 输出格式：{"title":"...","characters":[{"name":"...","description":"...","role":"..."}],"scenes":[{"id":"scene-1","shotType":"medium","description":"...","text":"...","characters":["..."]}]}
 风格：${formData.style} - ${styleDesc}`;
 
@@ -184,6 +186,7 @@ Style: ${formData.style} - ${styleDesc}`
           pageCount: formData.pageCount,
         };
         localStorage.setItem('generatedStory', JSON.stringify(enrichedStory));
+        localStorage.removeItem('seedream_create_form');
         window.location.href = '/characters';
       } else {
         throw new Error('JSON 解析失败，请重试');
@@ -387,15 +390,18 @@ Style: ${formData.style} - ${styleDesc}`
                 </Label>
                 <Input
                   id="pageCount"
-                  type="number"
-                  min="4"
-                  max="16"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="输入页数，如：8"
                   value={formData.pageCount}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value);
+                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                    const value = parseInt(raw);
                     if (!isNaN(value) && value >= 4 && value <= 16) {
                       setFormData({ ...formData, pageCount: value });
+                    } else if (raw === '') {
+                      setFormData({ ...formData, pageCount: 4 });
                     }
                   }}
                   className="h-12 sm:h-12 text-base sm:text-base font-semibold border-2 border-purple-200 focus:border-purple-500"
