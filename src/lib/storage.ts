@@ -37,7 +37,8 @@ class TauriBackend implements StorageBackend {
 
   async init(): Promise<void> {
     if (this.fs) return;
-    const fsMod = await import('@tauri-apps/plugin-fs');
+    // 使用 new Function 避免 Next.js 构建时静态解析未安装的包
+    const fsMod = await (new Function('return import("@tauri-apps/plugin-fs")')());
     this.fs = fsMod;
   }
 
@@ -95,7 +96,8 @@ class CapacitorBackend implements StorageBackend {
 
   async init(): Promise<void> {
     if (this.fs) return;
-    const mod = await import('@capacitor/filesystem');
+    // 使用 new Function 避免 Next.js 构建时静态解析未安装的包
+    const mod = await (new Function('return import("@capacitor/filesystem")')());
     this.fs = mod.Filesystem;
   }
 
