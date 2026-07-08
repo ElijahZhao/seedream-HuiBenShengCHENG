@@ -79,7 +79,7 @@ export default function CreatePage() {
 
       if (description) {
         setFormData({ ...formData, description });
-        setSearchMessage('已为您找到相关故事内容，您可以继续编辑或直接使用');
+        setSearchMessage('已为您生成故事描述，您可以继续编辑或直接使用');
       } else {
         setSearchMessage('未找到相关内容，请尝试其他主题或自己编写故事');
       }
@@ -286,7 +286,7 @@ Style: ${formData.style} - ${styleDesc}`
                   </Button>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  输入主题，点搜索可自动填充故事内容
+                  输入主题，点搜索可自动生成故事描述
                 </p>
               </div>
 
@@ -361,50 +361,25 @@ Style: ${formData.style} - ${styleDesc}`
               {/* 页数 */}
               <div className="space-y-3">
                 <Label htmlFor="pageCount" className="text-sm sm:text-base font-body font-semibold">
-                  绘本页数 <span className="text-purple-500 font-normal">(4-32页)</span>
+                  绘本页数 <span className="text-purple-500 font-normal">(4-16页)</span>
                 </Label>
                 <Input
                   id="pageCount"
                   type="number"
                   min="4"
-                  max="32"
-                  placeholder="输入页数，如：10"
+                  max="16"
+                  placeholder="输入页数，如：8"
                   value={formData.pageCount}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 4 && value <= 32) {
+                    if (!isNaN(value) && value >= 4 && value <= 16) {
                       setFormData({ ...formData, pageCount: value });
                     }
                   }}
                   className="h-12 sm:h-12 text-base sm:text-base font-semibold border-2 border-purple-200 focus:border-purple-500"
                 />
-                <div className="pt-1">
-                  <p className="text-xs text-muted-foreground mb-2">快速选择推荐值：</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { value: 6, label: '6' },
-                      { value: 8, label: '8' },
-                      { value: 12, label: '12' },
-                      { value: 16, label: '16' },
-                    ].map((option) => (
-                      <Button
-                        key={option.value}
-                        type="button"
-                        variant={formData.pageCount === option.value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setFormData({ ...formData, pageCount: option.value })}
-                        className={formData.pageCount === option.value
-                          ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                          : ""
-                        }
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
                 <p className="text-xs text-muted-foreground">
-                  提示：直接在上方输入框输入任意页数（4-32之间）
+                  提示：直接在上方输入框输入任意页数（4-16之间）
                 </p>
               </div>
 

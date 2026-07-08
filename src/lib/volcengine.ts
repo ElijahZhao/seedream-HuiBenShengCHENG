@@ -130,12 +130,12 @@ export async function searchStory(theme: string): Promise<string> {
         {
           role: 'system',
           content:
-            '你是一个专业的儿童故事搜索助手。用户提供一个故事主题，请列出 3-5 个相关的经典童话故事或寓言故事名称，用简短的中文描述。格式为列表，每条一行。',
+            '你是一位专业的儿童绘本故事作家。用户提供一个故事主题，请直接创作一个完整的、适合儿童的绘本故事描述（约300-500字）。描述应包含故事的主要情节、角色和场景，语言生动有趣，适合绘本插画创作。不要列出多个故事标题，也不要推荐其他书籍，直接输出这个故事的完整描述。',
         },
-        { role: 'user', content: `搜索与「${theme}」相关的故事` },
+        { role: 'user', content: `请创作一个关于「${theme}」的绘本故事描述` },
       ],
       stream: false,
-      temperature: 0.7,
+      temperature: 0.8,
     }),
   });
 

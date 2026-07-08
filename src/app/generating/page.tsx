@@ -8,6 +8,8 @@ import { Sparkles, Loader2, BookOpen, Image as ImageIcon, AlertCircle } from 'lu
 import { Button } from '@/components/ui/button';
 import { generateImage } from '@/lib/volcengine';
 import { getStylePrompt } from '@/lib/styleConfig';
+import { createLocalPicturebook } from '@/lib/db';
+import { getAuthUser } from '@/lib/localAuth';
 
 interface Scene {
   id: string;
@@ -114,9 +116,27 @@ export default function GeneratingPage() {
         const updatedStory = { ...story, scenes: updatedScenes };
         localStorage.setItem('generatedStory', JSON.stringify(updatedStory));
 
+        // 自动保存到作品库
+        try {
+          const authUser = getAuthUser();
+          const title = story.title || '未命名绘本';
+          const coverImage = updatedScenes.find((s: Scene) => s.imageUrl)?.imageUrl || '';
+          await createLocalPicturebook({
+            title,
+            coverImage,
+            pageCount: updatedScenes.length,
+            storyData: updatedStory,
+            userId: authUser?.id || 'guest',
+          });
+          console.log('[Generating] Auto-saved picturebook:', title);
+        } catch (saveErr) {
+          console.warn('[Generating] Auto-save failed:', saveErr);
+        }
+
+        // 生成完成后直接跳转到预览页面
         setTimeout(() => {
-          router.push('/storyboard');
-        }, 500);
+          router.push('/preview');
+        }, 800);
       } catch (err) {
         setError(err instanceof Error ? err.message : '生成图片失败');
       }

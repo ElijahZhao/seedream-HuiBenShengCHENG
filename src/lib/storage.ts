@@ -287,14 +287,15 @@ async function createBackend(): Promise<StorageBackend> {
 }
 
 // ========== 数据迁移（从旧版 localStorage） ==========
+// 注意：只迁移 seedream_db（SQLite 数据库），不迁移 seedream_auth 和 seedream_api_key
+// 因为后者由 localAuth.ts 直接管理，不应被存储层迁移清除
 
 async function migrateFromLocalStorage(backend: StorageBackend): Promise<void> {
   if (backend.name === 'localStorage') return;
 
   const oldKeys = [
     { key: 'seedream_db', type: 'binary' as const },
-    { key: 'seedream_auth', type: 'text' as const },
-    { key: 'seedream_api_key', type: 'text' as const },
+    // seedream_auth 和 seedream_api_key 由 localAuth.ts 直接管理，不参与迁移
   ];
 
   for (const { key, type } of oldKeys) {
