@@ -25,39 +25,43 @@ export default function StoryboardPage() {
   const [selectedScene, setSelectedScene] = useState(0);
 
   useEffect(() => {
-    // 从 localStorage 读取生成的故事
-    const storyData = await loadStory();
-    if (!storyData) {
-      router.push('/create');
-      return;
-    }
-
-    try {
-      const story = JSON.parse(storyData);
-      setScenes(story.scenes || []);
-    } catch (error) {
-      console.error('解析故事数据失败:', error);
-      router.push('/create');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+    (async () => {
+        // 从 localStorage 读取生成的故事
+        const storyData = await loadStory();
+        if (!storyData) {
+          router.push('/create');
+          return;
+        }
+    
+        try {
+          const story = JSON.parse(storyData);
+          setScenes(story.scenes || []);
+        } catch (error) {
+          console.error('解析故事数据失败:', error);
+          router.push('/create');
+        } finally {
+          setLoading(false);
+        }
+    })();
+}, [router]);
 
   // 编辑后同步回 localStorage
   useEffect(() => {
-    if (scenes.length > 0) {
-      try {
-        const storyData = await loadStory();
-        if (storyData) {
-          const story = JSON.parse(storyData);
-          story.scenes = scenes;
-          await saveStory(JSON.stringify(story));
+    (async () => {
+        if (scenes.length > 0) {
+          try {
+            const storyData = await loadStory();
+            if (storyData) {
+              const story = JSON.parse(storyData);
+              story.scenes = scenes;
+              await saveStory(JSON.stringify(story));
+            }
+          } catch (error) {
+            console.error('同步分镜数据失败:', error);
+          }
         }
-      } catch (error) {
-        console.error('同步分镜数据失败:', error);
-      }
-    }
-  }, [scenes]);
+    })();
+}, [scenes]);
 
   const handleGenerate = () => {
     // 跳转到生成页面
