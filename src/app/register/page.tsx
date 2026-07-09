@@ -53,10 +53,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-2 border-purple-100 shadow-clay-md">
+      <Card className="w-full max-w-md border-2 border-purple-100 shadow-clay-md animate-bounce-in">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center animate-float-gentle">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-fade-in-up-stagger delay-100">
               <Label htmlFor="name" className="text-sm font-medium">用户名</Label>
               <Input
                 id="name"
@@ -86,7 +86,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-fade-in-up-stagger delay-200">
               <Label htmlFor="email" className="text-sm font-medium">邮箱</Label>
               <Input
                 id="email"
@@ -99,7 +99,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-fade-in-up-stagger delay-300">
               <Label htmlFor="password" className="text-sm font-medium">密码</Label>
               <Input
                 id="password"
@@ -113,7 +113,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 animate-fade-in-up-stagger delay-400">
               <Label htmlFor="confirmPassword" className="text-sm font-medium">确认密码</Label>
               <Input
                 id="confirmPassword"
@@ -129,7 +129,7 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 animate-breathing animate-bounce-click"
               disabled={loading}
             >
               {loading ? (

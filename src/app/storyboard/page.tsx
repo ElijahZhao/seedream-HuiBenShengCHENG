@@ -146,7 +146,7 @@ export default function StoryboardPage() {
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Scene List */}
             <div className="lg:col-span-1">
-              <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
+              <Card className="animate-bounce-in border-2 border-purple-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-heading">场景列表</CardTitle>
                   <CardDescription>点击查看详情</CardDescription>
@@ -183,7 +183,7 @@ export default function StoryboardPage() {
 
             {/* Scene Detail */}
             <div className="lg:col-span-2">
-              <Card className="border-2 border-orange-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
+              <Card className="animate-bounce-in delay-200 border-2 border-orange-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between font-heading">
                     <span>场景 {selectedScene + 1}</span>
@@ -271,7 +271,7 @@ export default function StoryboardPage() {
                 <Button
                   onClick={handleGenerate}
                   size="lg"
-                  className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 px-8 text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600"
+                  className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 px-8 text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600 animate-breathing animate-bounce-click"
                 >
                   <BookOpen className="mr-2 h-5 w-5" />
                   开始生成绘本

@@ -250,7 +250,7 @@ Style: ${formData.style} - ${styleDesc}`
             </p>
           </div>
 
-          <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-lg backdrop-blur-sm">
+          <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-lg backdrop-blur-sm animate-bounce-in">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-heading text-lg sm:text-xl">
                 <Sparkles className="h-5 w-5 text-purple-500" />
@@ -262,7 +262,7 @@ Style: ${formData.style} - ${styleDesc}`
             </CardHeader>
             <CardContent className="space-y-5 sm:space-y-6">
               {/* 故事主题 */}
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in-up-stagger delay-100">
                 <Label htmlFor="theme" className="text-sm sm:text-base font-body font-semibold">
                   故事主题 <span className="text-destructive">*</span>
                 </Label>
@@ -305,7 +305,7 @@ Style: ${formData.style} - ${styleDesc}`
               </div>
 
               {/* 故事描述 */}
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in-up-stagger delay-200">
                 <Label htmlFor="description" className="text-sm sm:text-base font-body font-semibold">
                   故事描述
                 </Label>
@@ -328,7 +328,7 @@ Style: ${formData.style} - ${styleDesc}`
               </div>
 
               {/* 目标年龄 */}
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in-up-stagger delay-300">
                 <Label htmlFor="ageGroup" className="text-sm sm:text-base font-body font-semibold">
                   目标年龄
                 </Label>
@@ -345,7 +345,7 @@ Style: ${formData.style} - ${styleDesc}`
               </div>
 
               {/* 艺术风格 */}
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in-up-stagger delay-400">
                 <Label className="text-sm sm:text-base font-body font-semibold">艺术风格</Label>
                 <div className="grid gap-2 sm:gap-2.5 grid-cols-2 sm:grid-cols-3">
                   {artStyles.map((style) => (
@@ -373,7 +373,7 @@ Style: ${formData.style} - ${styleDesc}`
               </div>
 
               {/* 页数 */}
-              <div className="space-y-3">
+              <div className="space-y-3 animate-fade-in-up-stagger delay-500">
                 <Label htmlFor="pageCount" className="text-sm sm:text-base font-body font-semibold">
                   绘本页数 <span className="text-purple-500 font-normal">(4-16页)</span>
                 </Label>
@@ -404,7 +404,7 @@ Style: ${formData.style} - ${styleDesc}`
               <Button
                 onClick={handleGenerate}
                 disabled={!isFormValid || loading}
-                className="h-12 sm:h-14 w-full bg-gradient-to-r from-purple-500 to-pink-500 text-base sm:text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600 relative overflow-hidden"
+                className="h-12 sm:h-14 w-full bg-gradient-to-r from-purple-500 to-pink-500 text-base sm:text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600 relative overflow-hidden animate-breathing animate-bounce-click"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">

@@ -420,6 +420,7 @@ export default function PreviewPage() {
                 size="sm"
                 onClick={handleSave}
                 disabled={saving || saved}
+                className="animate-bounce-click"
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -435,6 +436,7 @@ export default function PreviewPage() {
                 size="sm"
                 onClick={handleExport}
                 disabled={exporting}
+                className="animate-bounce-click"
               >
                 {exporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -453,7 +455,7 @@ export default function PreviewPage() {
         <div className="mx-auto max-w-4xl">
           {/* Book Viewer */}
           <div className="mb-8">
-            <Card className="border-4 border-white bg-white shadow-2xl">
+            <Card className="border-4 border-white bg-white shadow-2xl animate-bounce-in">
               <CardContent className="p-8">
                 <div className="grid gap-8 lg:grid-cols-2">
                   {/* Left Page */}
@@ -527,14 +529,14 @@ export default function PreviewPage() {
           </div>
 
           {/* Controls */}
-          <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
+          <Card className="animate-bounce-in delay-200 border-2 border-purple-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
             <CardContent className="flex items-center justify-between p-4">
               <Button
                 onClick={prevPage}
                 disabled={currentPage === 0}
                 variant="outline"
                 size="lg"
-                className="h-12"
+                className="h-12 animate-bounce-click"
               >
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 上一页
@@ -553,7 +555,7 @@ export default function PreviewPage() {
                 onClick={nextPage}
                 disabled={currentPage === totalPages - 1}
                 size="lg"
-                className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 animate-bounce-click"
               >
                 下一页
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -563,7 +565,7 @@ export default function PreviewPage() {
 
           {/* Story Info */}
           <div className="mt-8 text-center">
-            <Card className="border-2 border-pink-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
+            <Card className="animate-bounce-in delay-300 border-2 border-pink-100 bg-white/80 shadow-soft-md backdrop-blur-sm">
               <CardContent className="p-6">
                 <h2 className="mb-2 font-heading text-xl font-bold text-foreground">
                   {storyData.title}

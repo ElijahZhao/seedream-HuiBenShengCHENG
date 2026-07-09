@@ -116,7 +116,8 @@ export default function CharactersPage() {
             {characters.map((character, index) => (
               <Card
                 key={index}
-                className="border-2 border-pink-100 bg-white/80 shadow-soft-md backdrop-blur-sm"
+                className="animate-bounce-in border-2 border-pink-100 bg-white/80 shadow-soft-md backdrop-blur-sm"
+                style={{ animationDelay: `${index * 0.15}s` }}
               >
                 <CardHeader>
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-orange-500">
@@ -144,7 +145,7 @@ export default function CharactersPage() {
             <Button
               onClick={handleNext}
               size="lg"
-              className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 px-8 text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600"
+              className="h-12 bg-gradient-to-r from-purple-500 to-pink-500 px-8 text-lg font-body font-semibold hover:from-purple-600 hover:to-pink-600 animate-breathing animate-bounce-click"
             >
               下一步：分镜设计
               <ArrowRight className="ml-2 h-5 w-5" />

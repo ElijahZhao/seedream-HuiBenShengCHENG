@@ -161,7 +161,7 @@ export default function GeneratingPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       <div className="w-full max-w-4xl px-4">
-        <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-lg backdrop-blur-sm">
+        <Card className="border-2 border-purple-100 bg-white/80 shadow-soft-lg backdrop-blur-sm animate-bounce-in">
           <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
@@ -200,7 +200,8 @@ export default function GeneratingPage() {
                 return (
                   <div
                     key={scene.id}
-                    className="relative overflow-hidden rounded-lg border-2 bg-purple-50"
+                    className="animate-fade-in-up-stagger relative overflow-hidden rounded-lg border-2 bg-purple-50"
+                    style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div
                       className={`aspect-[4/3] flex items-center justify-center transition-opacity ${

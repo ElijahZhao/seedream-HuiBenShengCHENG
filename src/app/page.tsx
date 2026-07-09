@@ -86,8 +86,8 @@ export default function Home() {
       {/* Chapter 1: Hero Section - Intro Hook */}
       <section className="relative overflow-hidden min-h-screen flex items-center pt-20">
         {/* Background Decorations - 滚动触发模式 */}
-        <div className="absolute top-20 left-0 w-96 h-96 bg-purple-300/15 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-20 right-0 w-96 h-96 bg-cyan-300/15 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 left-0 w-96 h-96 bg-purple-300/15 rounded-full blur-3xl animate-float-gentle" />
+        <div className="absolute bottom-20 right-0 w-96 h-96 bg-cyan-300/15 rounded-full blur-3xl animate-float-gentle-delayed" />
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -109,7 +109,7 @@ export default function Home() {
               <Link href="/create">
                 <Button
                   size="lg"
-                  className="h-16 px-10 text-lg font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-2xl shadow-clay-md hover:shadow-clay-xl hover:glow-purple transition-all duration-300 hover-lift"
+                  className="h-16 px-10 text-lg font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-2xl shadow-clay-md hover:shadow-clay-xl hover:glow-purple transition-all duration-300 hover-lift animate-breathing animate-bounce-click"
                 >
                   <Sparkles className="mr-2 h-6 w-6 animate-bounce-soft" />
                   开始创作绘本
@@ -120,7 +120,8 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-16 px-10 text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 rounded-2xl shadow-clay-md hover:shadow-clay-xl transition-all duration-300 hover-lift"
+                  className="h-16 px-10 text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 rounded-2xl shadow-clay-md hover:shadow-clay-xl transition-all duration-300 hover-lift animate-breathing animate-bounce-click"
+                  style={{ animationDelay: '1s' }}
                 >
                   <BookOpen className="mr-2 h-6 w-6" />
                   我的创作
@@ -168,7 +169,8 @@ export default function Home() {
             {storyChapters.map((chapter, index) => (
               <div
                 key={index}
-                className="relative pl-16 lg:pl-20"
+                className="relative pl-16 lg:pl-20 animate-bounce-in"
+                style={{ animationDelay: `${index * 0.15}s` }}
               >
                 {/* Chapter Number */}
                 <div className="absolute left-0 top-0 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 text-white font-heading font-bold text-2xl shadow-clay-md hover-lift transition-all">
@@ -206,7 +208,7 @@ export default function Home() {
             <Link href="/my-works">
               <Button
                 size="lg"
-                className="h-16 px-10 text-lg font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-2xl shadow-clay-md hover:shadow-clay-xl transition-all duration-300 hover-lift"
+                className="h-16 px-10 text-lg font-semibold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-2xl shadow-clay-md hover:shadow-clay-xl transition-all duration-300 hover-lift animate-bounce-click"
               >
                 <BookOpen className="mr-2 h-6 w-6" />
                 我的创作
@@ -232,7 +234,8 @@ export default function Home() {
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className={`border-2 ${feature.highlight ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-cyan-50' : 'border-purple-100 bg-white/80'} shadow-clay-md backdrop-blur-sm hover:shadow-clay-lg hover:border-purple-200 transition-all duration-300 hover-lift`}
+                className={`animate-bounce-in border-2 ${feature.highlight ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-cyan-50' : 'border-purple-100 bg-white/80'} shadow-clay-md backdrop-blur-sm hover:shadow-clay-lg hover:border-purple-200 transition-all duration-300 hover-lift`}
+                style={{ animationDelay: `${index * 0.12}s` }}
               >
                 <CardHeader>
                   <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 text-white mb-6 shadow-clay-sm ${feature.highlight ? 'animate-pulse-soft' : ''}`}>
