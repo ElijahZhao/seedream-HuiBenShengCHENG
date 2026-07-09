@@ -11,6 +11,7 @@ import { createLocalPicturebook } from '@/lib/db';
 import { getAuthUser, restoreSession } from '@/lib/localAuth';
 import { getPDFExportText, getStyleName } from '@/utils/languageDetection';
 import { toast } from 'sonner';
+import { loadStory } from '@/lib/storyStorage';
 
 interface Scene {
   id: string;
@@ -36,7 +37,7 @@ export default function PreviewPage() {
   }, []);
 
   useEffect(() => {
-    const data = localStorage.getItem('generatedStory');
+    const data = await loadStory();
     if (data) {
       setStoryData(JSON.parse(data));
     }
