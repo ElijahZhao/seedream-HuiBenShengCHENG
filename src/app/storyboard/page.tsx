@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, ArrowRight, Camera, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { loadStory, saveStory } from '@/lib/storyStorage';
 
 interface Scene {
   id: string;
@@ -25,7 +26,7 @@ export default function StoryboardPage() {
 
   useEffect(() => {
     // 从 localStorage 读取生成的故事
-    const storyData = localStorage.getItem('generatedStory');
+    const storyData = await loadStory();
     if (!storyData) {
       router.push('/create');
       return;
@@ -46,11 +47,11 @@ export default function StoryboardPage() {
   useEffect(() => {
     if (scenes.length > 0) {
       try {
-        const storyData = localStorage.getItem('generatedStory');
+        const storyData = await loadStory();
         if (storyData) {
           const story = JSON.parse(storyData);
           story.scenes = scenes;
-          localStorage.setItem('generatedStory', JSON.stringify(story));
+          await saveStory(JSON.stringify(story));
         }
       } catch (error) {
         console.error('同步分镜数据失败:', error);
