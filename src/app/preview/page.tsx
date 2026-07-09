@@ -105,11 +105,17 @@ export default function PreviewPage() {
       pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'normal');
       pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'bold');
 
-      // 预加载所有图片为 base64（带CORS fallback）
+      // 预加载图片为 base64
       const preloadImage = async (url: string): Promise<string> => {
         if (!url) return '';
 
-        // 方法1: 直接fetch（如果CDN支持CORS）
+        // 如果已经是 base64 data URL，直接返回
+        if (url.startsWith('data:')) {
+          console.log('[PDF] 图片已是base64格式，直接使用');
+          return url;
+        }
+
+        // 方法1: 直接 fetch（如果 CDN 支持 CORS）
         try {
           const resp = await fetch(url, { mode: 'cors' });
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -120,15 +126,34 @@ export default function PreviewPage() {
             reader.onerror = () => reject(new Error('FileReader失败'));
             reader.readAsDataURL(blob);
           });
-          console.log('[PDF] Fetch图片成功:', url.slice(0, 60) + '...');
+          console.log('[PDF] 直接fetch图片成功');
           return dataUrl;
         } catch (fetchErr) {
-          console.warn('[PDF] Fetch图片失败，尝试Canvas方式:', fetchErr);
+          console.warn('[PDF] 直接fetch失败，尝试CORS代理:', fetchErr);
         }
 
-        // 方法2: 用Image+Canvas（处理fetch CORS失败的情况）
+        // 方法2: 通过 CORS 代理获取
+        try {
+          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+          const proxyResp = await fetch(proxyUrl);
+          if (!proxyResp.ok) throw new Error(`Proxy HTTP ${proxyResp.status}`);
+          const blob = await proxyResp.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('代理FileReader失败'));
+            reader.readAsDataURL(blob);
+          });
+          console.log('[PDF] CORS代理获取图片成功');
+          return dataUrl;
+        } catch (proxyErr) {
+          console.error('[PDF] CORS代理也失败:', proxyErr);
+        }
+
+        // 方法3: Image + Canvas（最后手段，可能因CORS污染失败）
         return new Promise<string>((resolve) => {
           const img = new Image();
+          img.crossOrigin = 'anonymous';
           img.onload = () => {
             try {
               const canvas = document.createElement('canvas');
@@ -137,33 +162,14 @@ export default function PreviewPage() {
               const ctx = canvas.getContext('2d');
               if (!ctx) { resolve(''); return; }
               ctx.drawImage(img, 0, 0);
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-              console.log('[PDF] Canvas图片转换成功');
-              resolve(dataUrl);
-            } catch (canvasErr) {
-              console.error('[PDF] Canvas导出失败（CORS污染）:', canvasErr);
-              // 方法3: 尝试带crossOrigin重载
-              const img2 = new Image();
-              img2.crossOrigin = 'anonymous';
-              img2.onload = () => {
-                try {
-                  const canvas2 = document.createElement('canvas');
-                  canvas2.width = img2.naturalWidth || 800;
-                  canvas2.height = img2.naturalHeight || 600;
-                  const ctx2 = canvas2.getContext('2d');
-                  if (!ctx2) { resolve(''); return; }
-                  ctx2.drawImage(img2, 0, 0);
-                  resolve(canvas2.toDataURL('image/jpeg', 0.92));
-                } catch {
-                  resolve('');
-                }
-              };
-              img2.onerror = () => resolve('');
-              img2.src = url;
+              resolve(canvas.toDataURL('image/jpeg', 0.92));
+            } catch {
+              console.error('[PDF] Canvas转换失败（CORS污染）');
+              resolve('');
             }
           };
           img.onerror = () => {
-            console.error('[PDF] 图片加载失败:', url.slice(0, 60));
+            console.error('[PDF] 图片加载完全失败');
             resolve('');
           };
           img.src = url;
