@@ -25,6 +25,14 @@ export async function createLocalPicturebook(data: {
     throw new Error('登录状态已过期，请重新登录');
   }
 
+  // Diagnostic: check if userId matches Supabase auth UUID
+  const authUserId = sessionData.session.user.id;
+  if (authUserId !== data.userId) {
+    console.warn('[DB] userId mismatch:', { authUserId, providedUserId: data.userId });
+    // Use the auth user ID from session to ensure RLS passes
+    data.userId = authUserId;
+  }
+
   const now = new Date().toISOString();
 
   const { data: row, error } = await supabase
