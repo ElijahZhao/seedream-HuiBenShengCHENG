@@ -37,11 +37,13 @@ export default function PreviewPage() {
   }, []);
 
   useEffect(() => {
-    const data = await loadStory();
-    if (data) {
-      setStoryData(JSON.parse(data));
-    }
-  }, []);
+    (async () => {
+        const data = await loadStory();
+        if (data) {
+          setStoryData(JSON.parse(data));
+        }
+    })();
+}, []);
 
   const scenes = storyData?.scenes || [];
   const totalPages = scenes.length;
