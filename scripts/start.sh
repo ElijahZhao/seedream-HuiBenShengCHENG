@@ -1,8 +1,8 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-COZE_WORKSPACE_PATH="${COZE_WORKSPACE_PATH:-$(pwd)}"
-PORT=5000
+COZE_WORKSPACE_PATH="${COZE_WORKSPACE_PATH:-/data/user/work}"
+PORT="${PORT:-3000}"
 DEPLOY_RUN_PORT="${DEPLOY_RUN_PORT:-$PORT}"
 
 start_service() {
