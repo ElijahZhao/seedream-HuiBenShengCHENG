@@ -27,6 +27,8 @@ jobs:
       - name: Build frontend
         run: pnpm next build
       - name: Build Tauri
+        env:
+          TAURI_BUILD: 1
         run: pnpm tauri:build
       - name: Upload NSIS installer
         uses: actions/upload-artifact@v4
@@ -53,6 +55,8 @@ jobs:
       - name: Build frontend
         run: pnpm next build
       - name: Build Tauri
+        env:
+          TAURI_BUILD: 1
         run: pnpm tauri:build
       - name: Upload DMG
         uses: actions/upload-artifact@v4
@@ -84,6 +88,8 @@ jobs:
       - name: Build frontend
         run: pnpm next build
       - name: Sync Capacitor
+        env:
+          TAURI_BUILD: 1
         run: pnpm cap sync
       - name: Decode keystore
         run: |
