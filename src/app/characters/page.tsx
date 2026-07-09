@@ -22,23 +22,25 @@ export default function CharactersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 从 localStorage 读取生成的故事
-    const storyData = await loadStory();
-    if (!storyData) {
-      router.push('/create');
-      return;
-    }
-
-    try {
-      const story = JSON.parse(storyData);
-      setCharacters(story.characters || []);
-    } catch (error) {
-      console.error('解析故事数据失败:', error);
-      router.push('/create');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+    (async () => {
+        // 从 localStorage 读取生成的故事
+        const storyData = await loadStory();
+        if (!storyData) {
+          router.push('/create');
+          return;
+        }
+    
+        try {
+          const story = JSON.parse(storyData);
+          setCharacters(story.characters || []);
+        } catch (error) {
+          console.error('解析故事数据失败:', error);
+          router.push('/create');
+        } finally {
+          setLoading(false);
+        }
+    })();
+}, [router]);
 
   const handleNext = () => {
     // 跳转到分镜页面
