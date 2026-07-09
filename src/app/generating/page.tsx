@@ -10,6 +10,7 @@ import { generateImage } from '@/lib/volcengine';
 import { getStylePrompt } from '@/lib/styleConfig';
 import { createLocalPicturebook } from '@/lib/db';
 import { getAuthUser } from '@/lib/localAuth';
+import { loadStory, saveStory } from '@/lib/storyStorage';
 
 interface Scene {
   id: string;
@@ -30,7 +31,7 @@ export default function GeneratingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storyData = localStorage.getItem('generatedStory');
+    const storyData = await loadStory();
     if (!storyData) {
       router.push('/create');
       return;
@@ -114,7 +115,7 @@ export default function GeneratingPage() {
         });
 
         const updatedStory = { ...story, scenes: updatedScenes };
-        localStorage.setItem('generatedStory', JSON.stringify(updatedStory));
+        await saveStory(JSON.stringify(updatedStory));
         setScenes(updatedScenes);
 
         // 自动保存到作品库
@@ -155,7 +156,7 @@ export default function GeneratingPage() {
 
   const [scenes, setScenes] = useState<Scene[]>(() => {
     if (typeof window === 'undefined') return [];
-    const storyData = localStorage.getItem('generatedStory');
+    const storyData = await loadStory();
     if (!storyData) return [];
     try {
       const story = JSON.parse(storyData);
