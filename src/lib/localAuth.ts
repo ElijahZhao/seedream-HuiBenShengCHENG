@@ -7,7 +7,7 @@
 import { supabase } from './supabaseClient';
 
 const AUTH_KEY = 'seedream_auth';
-const DEFAULT_API_KEY = 'ark-1f5b19a3-ea46-432c-8c1e-327e64de67c5-0fab0';
+const DEFAULT_API_KEY = '';
 
 interface AuthUser {
   id: string;
