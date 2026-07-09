@@ -86,10 +86,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Build frontend
-        run: pnpm next build
-      - name: Sync Capacitor
         env:
           TAURI_BUILD: 1
+        run: pnpm next build
+      - name: Sync Capacitor
         run: pnpm cap sync
       - name: Decode keystore
         run: |
