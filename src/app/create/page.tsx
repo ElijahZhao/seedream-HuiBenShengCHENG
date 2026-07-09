@@ -16,6 +16,7 @@ import { detectLanguage } from '@/utils/languageDetection';
 import { searchStory, generateStoryStream } from '@/lib/volcengine';
 import { getStyleDescription, getArtStylesForDisplay } from '@/lib/styleConfig';
 import { toast } from 'sonner';
+import { saveStory } from '@/lib/storyStorage';
 
 const artStyles = getArtStylesForDisplay();
 
@@ -171,7 +172,7 @@ Style: ${formData.style} - ${styleDesc}`
           pageCount: formData.pageCount,
           language: detectedLanguage || 'zh',
         };
-        localStorage.setItem('generatedStory', JSON.stringify(enrichedStory));
+        await saveStory(JSON.stringify(enrichedStory));
         localStorage.removeItem('seedream_create_form');
         window.location.href = '/characters';
       } else {
