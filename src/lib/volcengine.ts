@@ -104,13 +104,13 @@ export async function generateImage(
   }
 
   const data = await response.json();
-  const imageUrl = data.data?.[0]?.url;
+  const base64 = data.data?.[0]?.base64;
 
-  if (!imageUrl) {
-    throw new Error('图片生成返回了空 URL');
+  if (!base64) {
+    throw new Error('图片生成返回了空数据');
   }
 
-  return imageUrl;
+  return base64;
 }
 
 // ========== 搜索故事 ==========
