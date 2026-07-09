@@ -29,6 +29,7 @@ export default function GeneratingPage() {
   const [currentStep, setCurrentStep] = useState('准备生成...');
   const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [scenes, setScenes] = useState<Scene[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -156,17 +157,6 @@ export default function GeneratingPage() {
     })();
 }, [router]);
 
-  const [scenes, setScenes] = useState<Scene[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const storyData = await loadStory();
-    if (!storyData) return [];
-    try {
-      const story = JSON.parse(storyData);
-      return story.scenes || [];
-    } catch {
-      return [];
-    }
-  });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
