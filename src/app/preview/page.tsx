@@ -105,27 +105,76 @@ export default function PreviewPage() {
       pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'normal');
       pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'bold');
 
-      // 预加载所有图片为 base64
+      // 预加载所有图片为 base64（带CORS fallback）
       const preloadImage = async (url: string): Promise<string> => {
         if (!url) return '';
+
+        // 方法1: 直接fetch（如果CDN支持CORS）
         try {
-          const resp = await fetch(url);
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
           const blob = await resp.blob();
-          return new Promise<string>((resolve) => {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => resolve(url);
+            reader.onerror = () => reject(new Error('FileReader失败'));
             reader.readAsDataURL(blob);
           });
-        } catch {
-          return url;
+          console.log('[PDF] Fetch图片成功:', url.slice(0, 60) + '...');
+          return dataUrl;
+        } catch (fetchErr) {
+          console.warn('[PDF] Fetch图片失败，尝试Canvas方式:', fetchErr);
         }
+
+        // 方法2: 用Image+Canvas（处理fetch CORS失败的情况）
+        return new Promise<string>((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || 800;
+              canvas.height = img.naturalHeight || 600;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) { resolve(''); return; }
+              ctx.drawImage(img, 0, 0);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+              console.log('[PDF] Canvas图片转换成功');
+              resolve(dataUrl);
+            } catch (canvasErr) {
+              console.error('[PDF] Canvas导出失败（CORS污染）:', canvasErr);
+              // 方法3: 尝试带crossOrigin重载
+              const img2 = new Image();
+              img2.crossOrigin = 'anonymous';
+              img2.onload = () => {
+                try {
+                  const canvas2 = document.createElement('canvas');
+                  canvas2.width = img2.naturalWidth || 800;
+                  canvas2.height = img2.naturalHeight || 600;
+                  const ctx2 = canvas2.getContext('2d');
+                  if (!ctx2) { resolve(''); return; }
+                  ctx2.drawImage(img2, 0, 0);
+                  resolve(canvas2.toDataURL('image/jpeg', 0.92));
+                } catch {
+                  resolve('');
+                }
+              };
+              img2.onerror = () => resolve('');
+              img2.src = url;
+            }
+          };
+          img.onerror = () => {
+            console.error('[PDF] 图片加载失败:', url.slice(0, 60));
+            resolve('');
+          };
+          img.src = url;
+        });
       };
 
       const sceneImageBase64: string[] = [];
       for (let i = 0; i < scenes.length; i++) {
         const base64 = await preloadImage(scenes[i].imageUrl || '');
         sceneImageBase64.push(base64);
+        console.log(`[PDF] 场景${i + 1}图片加载:`, base64 ? (base64.startsWith('data:') ? '成功(base64)' : '失败(非base64)') : '空');
       }
 
       // 辅助：绘制背景色块
