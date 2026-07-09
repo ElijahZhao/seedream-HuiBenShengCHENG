@@ -118,11 +118,11 @@ export async function generateImage(
 export async function searchStory(theme: string): Promise<string> {
   const apiKey = getApiKey();
 
-  const response = await fetch(`${BASE_URL}/chat/completions`, {
+  const response = await fetch('/api/volcengine/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'x-api-key': apiKey,
     },
     body: JSON.stringify({
       model: 'doubao-seed-2-0-mini-260215',
