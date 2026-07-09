@@ -572,7 +572,7 @@ export default function PreviewPage() {
                   由 Seedream AI 创作
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {storyData.characters.map((char: any, index: number) => (
+                  {(storyData.characters || []).map((char: any, index: number) => (
                     <span
                       key={index}
                       className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-body font-semibold text-purple-700"
