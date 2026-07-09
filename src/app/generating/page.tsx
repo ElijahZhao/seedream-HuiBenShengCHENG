@@ -31,128 +31,130 @@ export default function GeneratingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storyData = await loadStory();
-    if (!storyData) {
-      router.push('/create');
-      return;
-    }
-
-    const story = JSON.parse(storyData);
-    const scenes: Scene[] = story.scenes || [];
-
-    if (scenes.length === 0) {
-      router.push('/create');
-      return;
-    }
-
-    const generateAllImages = async () => {
-      try {
-        const stylePrompt = getStylePrompt(story.style || 'watercolor');
-        const theme = story.theme || '';
-        const characters = story.characters || [];
-        const ageGroup = story.ageGroup || '3-5';
-
-        let characterPrompt = '';
-        if (characters.length > 0) {
-          characterPrompt = '\n角色设定：\n' + characters.map((char: any) =>
-            `- ${char.name}：${char.description}（${char.role}）`
-          ).join('\n');
+    (async () => {
+        const storyData = await loadStory();
+        if (!storyData) {
+          router.push('/create');
+          return;
         }
-
-        const completedScenes: Scene[] = new Array(scenes.length).fill(null) as Scene[];
-        let completedCount = 0;
-
-        // 并发生成（限制并发数）
-        const executing = new Set<Promise<void>>();
-
-        for (let i = 0; i < scenes.length; i++) {
-          const scene = scenes[i];
-
-          const task = (async () => {
-            const prompt = `${stylePrompt}。故事主题：${theme}${characterPrompt}\n\n场景描述：${scene.description}。适合${ageGroup}岁儿童。高质量插画，细节丰富，保持角色一致性。`;
-            let lastError: Error | null = null;
-
-            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-              try {
-                const imageUrl = await generateImage(prompt, { size: '2k' });
-
-                completedScenes[i] = { ...scene, imageUrl };
-                completedCount++;
-
-                setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
-                setProgress(Math.round((completedCount / scenes.length) * 100));
-                setCurrentStep(`场景 ${i + 1}/${scenes.length} 生成完成`);
-
-                return;
-              } catch (err) {
-                lastError = err instanceof Error ? err : new Error(String(err));
-                if (attempt < MAX_RETRIES) {
-                  await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    
+        const story = JSON.parse(storyData);
+        const scenes: Scene[] = story.scenes || [];
+    
+        if (scenes.length === 0) {
+          router.push('/create');
+          return;
+        }
+    
+        const generateAllImages = async () => {
+          try {
+            const stylePrompt = getStylePrompt(story.style || 'watercolor');
+            const theme = story.theme || '';
+            const characters = story.characters || [];
+            const ageGroup = story.ageGroup || '3-5';
+    
+            let characterPrompt = '';
+            if (characters.length > 0) {
+              characterPrompt = '\n角色设定：\n' + characters.map((char: any) =>
+                `- ${char.name}：${char.description}（${char.role}）`
+              ).join('\n');
+            }
+    
+            const completedScenes: Scene[] = new Array(scenes.length).fill(null) as Scene[];
+            let completedCount = 0;
+    
+            // 并发生成（限制并发数）
+            const executing = new Set<Promise<void>>();
+    
+            for (let i = 0; i < scenes.length; i++) {
+              const scene = scenes[i];
+    
+              const task = (async () => {
+                const prompt = `${stylePrompt}。故事主题：${theme}${characterPrompt}\n\n场景描述：${scene.description}。适合${ageGroup}岁儿童。高质量插画，细节丰富，保持角色一致性。`;
+                let lastError: Error | null = null;
+    
+                for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                  try {
+                    const imageUrl = await generateImage(prompt, { size: '2k' });
+    
+                    completedScenes[i] = { ...scene, imageUrl };
+                    completedCount++;
+    
+                    setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
+                    setProgress(Math.round((completedCount / scenes.length) * 100));
+                    setCurrentStep(`场景 ${i + 1}/${scenes.length} 生成完成`);
+    
+                    return;
+                  } catch (err) {
+                    lastError = err instanceof Error ? err : new Error(String(err));
+                    if (attempt < MAX_RETRIES) {
+                      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                    }
+                  }
                 }
+    
+                // 全部重试失败
+                completedCount++;
+                setProgress(Math.round((completedCount / scenes.length) * 100));
+                setCurrentStep(`场景 ${i + 1}/${scenes.length} 生成失败`);
+              })();
+    
+              executing.add(task);
+              task.finally(() => executing.delete(task));
+    
+              if (executing.size >= CONCURRENCY_LIMIT) {
+                await Promise.race(executing);
               }
             }
-
-            // 全部重试失败
-            completedCount++;
-            setProgress(Math.round((completedCount / scenes.length) * 100));
-            setCurrentStep(`场景 ${i + 1}/${scenes.length} 生成失败`);
-          })();
-
-          executing.add(task);
-          task.finally(() => executing.delete(task));
-
-          if (executing.size >= CONCURRENCY_LIMIT) {
-            await Promise.race(executing);
-          }
-        }
-
-        await Promise.all(executing);
-
-        // 保存结果到 localStorage
-        const updatedScenes = completedScenes.map((s, idx) => {
-          if (s && s.imageUrl) return s;
-          return { ...scenes[idx], imageUrl: null };
-        });
-
-        const updatedStory = { ...story, scenes: updatedScenes };
-        await saveStory(JSON.stringify(updatedStory));
-        setScenes(updatedScenes);
-
-        // 自动保存到作品库
-        const authUser = getAuthUser();
-        if (authUser?.id) {
-          try {
-            const title = story.title || '未命名绘本';
-            const coverImage = updatedScenes.find((s: Scene) => s.imageUrl)?.imageUrl || '';
-            await createLocalPicturebook({
-              title,
-              coverImage,
-              pageCount: updatedScenes.length,
-              storyData: updatedStory,
-              userId: authUser.id,
-              theme: story.theme || '',
-              ageGroup: story.ageGroup || '3-5',
-              style: story.style || 'watercolor',
+    
+            await Promise.all(executing);
+    
+            // 保存结果到 localStorage
+            const updatedScenes = completedScenes.map((s, idx) => {
+              if (s && s.imageUrl) return s;
+              return { ...scenes[idx], imageUrl: null };
             });
-            console.log('[Generating] Auto-saved picturebook:', title);
-          } catch (saveErr) {
-            console.warn('[Generating] Auto-save failed:', saveErr);
+    
+            const updatedStory = { ...story, scenes: updatedScenes };
+            await saveStory(JSON.stringify(updatedStory));
+            setScenes(updatedScenes);
+    
+            // 自动保存到作品库
+            const authUser = getAuthUser();
+            if (authUser?.id) {
+              try {
+                const title = story.title || '未命名绘本';
+                const coverImage = updatedScenes.find((s: Scene) => s.imageUrl)?.imageUrl || '';
+                await createLocalPicturebook({
+                  title,
+                  coverImage,
+                  pageCount: updatedScenes.length,
+                  storyData: updatedStory,
+                  userId: authUser.id,
+                  theme: story.theme || '',
+                  ageGroup: story.ageGroup || '3-5',
+                  style: story.style || 'watercolor',
+                });
+                console.log('[Generating] Auto-saved picturebook:', title);
+              } catch (saveErr) {
+                console.warn('[Generating] Auto-save failed:', saveErr);
+              }
+            } else {
+              console.log('[Generating] Skipped auto-save: user not logged in');
+            }
+    
+            // 生成完成后直接跳转到预览页面
+            setTimeout(() => {
+              router.push('/preview');
+            }, 800);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : '生成图片失败');
           }
-        } else {
-          console.log('[Generating] Skipped auto-save: user not logged in');
-        }
-
-        // 生成完成后直接跳转到预览页面
-        setTimeout(() => {
-          router.push('/preview');
-        }, 800);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '生成图片失败');
-      }
-    };
-
-    generateAllImages();
-  }, [router]);
+        };
+    
+        generateAllImages();
+    })();
+}, [router]);
 
   const [scenes, setScenes] = useState<Scene[]>(() => {
     if (typeof window === 'undefined') return [];
