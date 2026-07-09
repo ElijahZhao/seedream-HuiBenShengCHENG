@@ -17,11 +17,11 @@ export async function* generateStoryStream(
   const apiKey = getApiKey();
 
   try {
-    const response = await fetch(`${BASE_URL}/chat/completions`, {
+    const response = await fetch('/api/volcengine/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
       },
       body: JSON.stringify({
         model: 'doubao-seed-2-0-mini-260215',
@@ -83,18 +83,17 @@ export async function generateImage(
 ): Promise<string> {
   const apiKey = getApiKey();
 
-  const response = await fetch(`${BASE_URL}/images/generations`, {
+  const response = await fetch('/api/volcengine/image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'x-api-key': apiKey,
     },
     body: JSON.stringify({
       model: 'doubao-seedream-5-0-260128',
       prompt,
       size: options?.size || '2k',
       output_format: options?.outputFormat || 'png',
-      response_format: 'b64_json',
       watermark: options?.watermark ?? false,
     }),
   });
@@ -105,35 +104,10 @@ export async function generateImage(
   }
 
   const data = await response.json();
-
-  // 优先使用 base64 格式（避免 CORS 问题）
-  const b64 = data.data?.[0]?.b64_json;
-  if (b64) {
-    return `data:image/png;base64,${b64}`;
-  }
-
-  // 如果 API 不支持 b64_json，回退到 URL 格式
   const imageUrl = data.data?.[0]?.url;
-  if (!imageUrl) {
-    throw new Error('图片生成返回了空数据');
-  }
 
-  // 通过 CORS 代理获取图片并转为 base64
-  try {
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(imageUrl)}`;
-    const imgResp = await fetch(proxyUrl);
-    if (imgResp.ok) {
-      const blob = await imgResp.blob();
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('图片转换失败'));
-        reader.readAsDataURL(blob);
-      });
-      return dataUrl;
-    }
-  } catch (proxyErr) {
-    console.warn('[generateImage] CORS代理失败，返回原始URL:', proxyErr);
+  if (!imageUrl) {
+    throw new Error('图片生成返回了空 URL');
   }
 
   return imageUrl;
