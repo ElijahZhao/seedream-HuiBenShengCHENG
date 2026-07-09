@@ -28,21 +28,23 @@ export default function CreatePage() {
   const [searchProgress, setSearchProgress] = useState(0);
   const [searchMessage, setSearchMessage] = useState('');
   // 从 localStorage 恢复表单数据
-  const loadFormData = () => {
-    try {
-      const saved = localStorage.getItem('seedream_create_form');
-      if (saved) return JSON.parse(saved);
-    } catch { /* ignore */ }
-    return {
-      theme: '',
-      ageGroup: '3-5',
-      style: 'watercolor',
-      pageCount: 8,
-      description: '',
-    };
+  const defaultFormData = {
+    theme: '',
+    ageGroup: '3-5',
+    style: 'watercolor',
+    pageCount: 8,
+    description: '',
   };
 
-  const [formData, setFormData] = useState(loadFormData);
+  const [formData, setFormData] = useState(defaultFormData);
+
+  // Load from localStorage on client side only
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('seedream_create_form');
+      if (saved) setFormData(JSON.parse(saved));
+    } catch { /* ignore */ }
+  }, []);
 
   // 表单变化时自动保存到 localStorage
   useEffect(() => {
