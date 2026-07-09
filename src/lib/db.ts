@@ -19,6 +19,12 @@ export async function createLocalPicturebook(data: {
   storyData: any;
   coverImage?: string;
 }) {
+  // Validate session before DB operation
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    throw new Error('登录状态已过期，请重新登录');
+  }
+
   const now = new Date().toISOString();
 
   const { data: row, error } = await supabase
@@ -41,7 +47,13 @@ export async function createLocalPicturebook(data: {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Provide user-friendly error messages for common RLS issues
+    if (error.code === '42501' || error.message?.includes('permission denied')) {
+      throw new Error('数据库权限不足，请联系管理员检查Supabase RLS策略配置');
+    }
+    throw new Error(error.message);
+  }
 
   return {
     id: row.id,
