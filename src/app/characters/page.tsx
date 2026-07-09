@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Sparkles, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
+import { loadStory } from '@/lib/storyStorage';
 
 interface Character {
   name: string;
@@ -22,7 +23,7 @@ export default function CharactersPage() {
 
   useEffect(() => {
     // 从 localStorage 读取生成的故事
-    const storyData = localStorage.getItem('generatedStory');
+    const storyData = await loadStory();
     if (!storyData) {
       router.push('/create');
       return;
