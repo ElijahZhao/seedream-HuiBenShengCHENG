@@ -84,20 +84,26 @@ export default function PreviewPage() {
       // Load Chinese font for CJK support
       console.log('加载中文字体...');
       const fontResponse = await fetch('/fonts/NotoSansSC-Regular.ttf');
-      const fontBlob = await fontResponse.blob();
-      const fontArrayBuffer = await fontBlob.arrayBuffer();
-      const fontUint8Array = new Uint8Array(fontArrayBuffer);
-
-      // Convert to base64 for jsPDF
-      let binary = '';
-      for (let i = 0; i < fontUint8Array.length; i++) {
-        binary += String.fromCharCode(fontUint8Array[i]);
+      if (!fontResponse.ok) {
+        throw new Error(`字体加载失败: ${fontResponse.status} ${fontResponse.statusText}`);
       }
-      const fontBase64 = btoa(binary);
+      const fontBlob = await fontResponse.blob();
+
+      // Use FileReader for safe base64 encoding of large binary files
+      const fontBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error('字体文件读取失败'));
+        reader.readAsDataURL(fontBlob);
+      });
 
       pdf.addFileToVFS('NotoSansSC-Regular.ttf', fontBase64);
-      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'normal', 'normal');
-      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'bold', 'normal');
+      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'normal');
+      pdf.addFont('NotoSansSC-Regular.ttf', 'NotoSansSC', 'bold');
 
       // 预加载所有图片为 base64
       const preloadImage = async (url: string): Promise<string> => {
@@ -180,7 +186,16 @@ export default function PreviewPage() {
         if (imgBase64 && imgBase64.startsWith('data:')) {
           try {
             const imgHeight = 70;
-            pdf.addImage(imgBase64, 'JPEG', margin, y, contentWidth, imgHeight, undefined, 'FAST');
+            // Auto-detect image format from data URL
+            const getImageFormat = (dataUrl: string): string => {
+              if (dataUrl.includes('image/png')) return 'PNG';
+              if (dataUrl.includes('image/jpeg') || dataUrl.includes('image/jpg')) return 'JPEG';
+              if (dataUrl.includes('image/webp')) return 'WEBP';
+              if (dataUrl.includes('image/gif')) return 'GIF';
+              return 'JPEG';
+            };
+            const imgFormat = getImageFormat(imgBase64);
+            pdf.addImage(imgBase64, imgFormat, margin, y, contentWidth, imgHeight, undefined, 'FAST');
             y += imgHeight + 8;
           } catch {
             pdf.setFillColor(229, 231, 235);
@@ -257,7 +272,8 @@ export default function PreviewPage() {
       pdf.save(`${storyData.title || (language === 'en' ? 'Picture Book' : '绘本')}_${Date.now()}.pdf`);
     } catch (error) {
       console.error('导出失败:', error);
-      toast.error('导出失败，请稍后重试');
+      const errMsg = error instanceof Error ? error.message : '未知错误';
+      toast.error(`导出失败：${errMsg}`);
     } finally {
       setExporting(false);
     }
